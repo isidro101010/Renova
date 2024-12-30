@@ -104,14 +104,6 @@
     </div>
     <main>
         <section>
-            <h2>Procesar Excel</h2>
-            <input type="file" id="excel-upload" accept=".xlsx">
-            <button id="process-excel">Procesar Excel</button>
-            <div class="progress-bar-container" id="progress-bar-container-excel">
-                <div class="progress-bar" id="progress-bar-excel"></div>
-            </div>
-        </section>
-        <section>
             <h2>Cargar Facturas</h2>
             <form id="upload-form">
                 <input type="file" id="file-upload" accept=".xml">
@@ -120,59 +112,67 @@
             <div class="progress-bar-container" id="progress-bar-container-xml">
                 <div class="progress-bar" id="progress-bar-xml"></div>
             </div>
+        </section>
+        <section>
+            <h2>Procesar Imagen</h2>
+            <input type="file" id="image-upload" accept="image/*">
+            <button id="process-image">Procesar Imagen</button>
+        </section>
+        <section>
+            <h2>Procesar Texto</h2>
             <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
             <button id="process-text">Procesar Texto</button>
             <div class="progress-bar-container" id="progress-bar-container">
                 <div class="progress-bar" id="progress-bar"></div>
             </div>
-            <div>
-                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
-                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Factura</th>
-                        <th>Fecha</th>
-                        <th>Fecha Entrega</th>
-                        <th>Cliente</th>
-                        <th>RUC</th>
-                        <th>Provincia</th>
-                        <th>Ciudad</th>
-                        <th>Lista Precio</th>
-                        <th>Canal</th>
-                        <th>Sub Canal</th>
-                        <th>Vendedor</th>
-                        <th>Cuentas</th>
-                        <th>Código</th>
-                        <th>Modelo</th>
-                        <th>Proveedor</th>
-                        <th>Cantidad</th>
-                        <th>Costo Unitario</th>
-                        <th>Costo Total</th>
-                        <th>IVA Pagado</th>
-                        <th>Precio Unitario</th>
-                        <th>Precio Total</th>
-                        <th>IVA Cobrado</th>
-                        <th>Total Facturado</th>
-                        <th>Utilidad</th>
-                        <th>Crédito</th>
-                        <th>Condiciones Crédito</th>
-                        <th>Pendientes</th>
-                        <th>Perdido</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody id="invoice-table">
-                    <!-- Filas se agregarán dinámicamente -->
-                </tbody>
-            </table>
         </section>
+        <div>
+            <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
+            <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Factura</th>
+                    <th>Fecha</th>
+                    <th>Fecha Entrega</th>
+                    <th>Cliente</th>
+                    <th>RUC</th>
+                    <th>Provincia</th>
+                    <th>Ciudad</th>
+                    <th>Lista Precio</th>
+                    <th>Canal</th>
+                    <th>Sub Canal</th>
+                    <th>Vendedor</th>
+                    <th>Cuentas</th>
+                    <th>Código</th>
+                    <th>Modelo</th>
+                    <th>Proveedor</th>
+                    <th>Cantidad</th>
+                    <th>Costo Unitario</th>
+                    <th>Costo Total</th>
+                    <th>IVA Pagado</th>
+                    <th>Precio Unitario</th>
+                    <th>Precio Total</th>
+                    <th>IVA Cobrado</th>
+                    <th>Total Facturado</th>
+                    <th>Utilidad</th>
+                    <th>Crédito</th>
+                    <th>Condiciones Crédito</th>
+                    <th>Pendientes</th>
+                    <th>Perdido</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-table">
+                <!-- Filas se agregarán dinámicamente -->
+            </tbody>
+        </table>
     </main>
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.1/dist/tesseract.min.js"></script>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
@@ -189,71 +189,16 @@
             }
         });
 
-        document.getElementById("process-excel").addEventListener("click", () => {
-            const file = document.getElementById('excel-upload').files[0];
+        document.getElementById("process-image").addEventListener("click", () => {
+            const file = document.getElementById('image-upload').files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-                    const progressBar = document.getElementById("progress-bar-excel");
-                    const progressBarContainer = document.getElementById("progress-bar-container-excel");
-                    progressBarContainer.style.display = "block";
-
-                    rows.forEach((row, index) => {
-                        setTimeout(() => {
-                            if (row.length >= 29) {
-                                invoices.push({
-                                    factura: row[0],
-                                    fecha: row[1],
-                                    fecha_entrega: row[2],
-                                    cliente: row[3],
-                                    ruc: row[4],
-                                    provincia: row[5],
-                                    ciudad: row[6],
-                                    lista_precio: row[7],
-                                    canal: row[8],
-                                    sub_canal: row[9],
-                                    vendedor: row[10],
-                                    cuentas: row[11],
-                                    codigo: row[12],
-                                    modelo: row[13],
-                                    proveedor: row[14],
-                                    cantidad: row[15],
-                                    costo_unitario: row[16],
-                                    costo_total: row[17],
-                                    iva_pagado: row[18],
-                                    precio_unitario: row[19],
-                                    precio_total: row[20],
-                                    iva_cobrado: row[21],
-                                    total_facturado: row[22],
-                                    utilidad: row[23],
-                                    credito: row[24],
-                                    condiciones_credito: row[25],
-                                    pendientes: row[26],
-                                    perdido: row[27]
-                                });
-                            }
-
-                            progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
-
-                            if (index === rows.length - 1) {
-                                progressBarContainer.style.display = "none";
-                                invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                                localStorage.setItem("invoices", JSON.stringify(invoices));
-                                populateTable();
-                                updateFacturaCount();
-                            }
-                        }, index * 50);
+                Tesseract.recognize(file, 'spa', { logger: m => console.log(m) })
+                    .then(({ data: { text } }) => {
+                        document.getElementById('text-input').value = text;
+                        alert('Texto extraído de la imagen y pegado en la página.');
                     });
-                };
-                reader.readAsArrayBuffer(file);
             } else {
-                alert('Por favor, sube un archivo de Excel.');
+                alert('Por favor, sube una imagen.');
             }
         });
 
