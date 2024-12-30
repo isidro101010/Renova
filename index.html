@@ -270,8 +270,8 @@
             const tbody = document.getElementById("invoice-table");
             tbody.innerHTML = "";
 
-            // Ordenar las facturas por fecha de más nuevo a más viejo
-            invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            // Ordenar las facturas por fecha de más viejo a más nuevo
+            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
@@ -316,6 +316,8 @@
             XLSX.utils.sheet_add_aoa(worksheet, [
                 ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]
             ], { origin: -1 });
+
+            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar las facturas por fecha de más viejo a más nuevo
 
             invoices.forEach(invoice => {
                 XLSX.utils.sheet_add_aoa(worksheet, [
