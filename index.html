@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procesar Excel y Texto</title>
+    <title>Sistema de Facturación Inteligente</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,27 +17,31 @@
             color: white;
             padding: 20px;
             text-align: center;
-            position: relative;
         }
         h1 {
             margin: 0;
         }
-        .export-excel-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .export-excel-btn:hover {
-            background-color: #45a049;
-        }
         main {
             padding: 20px;
+            display: none;
+        }
+        form {
+            margin: 20px 0;
+        }
+        textarea, input, button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        button {
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #cc5200;
         }
         table {
             width: 100%;
@@ -60,65 +64,61 @@
         tbody tr:hover {
             background-color: #f1f1f1;
         }
-        button {
-            background-color: #4caf50;
+        .delete-btn {
+            background-color: red;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 5px;
             cursor: pointer;
-            margin: 10px 0;
         }
-        button:hover {
-            background-color: #45a049;
-        }
-        input[type="file"], textarea {
+        .factura-count {
+            font-weight: bold;
             margin: 10px 0;
-            width: 100%;
-            max-width: 400px;
-            padding: 10px;
         }
         .progress-bar-container {
             width: 100%;
             background-color: #ddd;
             height: 20px;
             margin: 10px 0;
-            position: relative;
             display: none;
         }
         .progress-bar {
             height: 100%;
             background-color: #4caf50;
             width: 0%;
-            transition: width 0.2s;
-        }
-        .progress-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            top: 0;
-            line-height: 20px;
-            color: #333;
-            font-weight: bold;
+            transition: width 0.5s;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Procesar Archivo y Texto</h1>
-        <button class="export-excel-btn" id="export-excel">Excel</button>
+        <h1>Sistema de Facturación Inteligente</h1>
     </header>
+    <div id="login-section">
+        <h2>Acceso al Sistema</h2>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+        <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
+    </div>
     <main>
         <section>
-            <h2>Subir Archivo Excel</h2>
-            <input type="file" id="file-upload" accept=".xls, .xlsx">
-            <h2>Procesar Texto</h2>
-            <textarea id="text-input" rows="5" placeholder="Pega aquí los datos de las facturas"></textarea>
+            <h2>Cargar Facturas</h2>
+            <form id="upload-form">
+                <input type="file" id="file-upload" accept=".xml">
+                <button type="submit">Subir Factura XML</button>
+            </form>
+            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
             <button id="process-text">Procesar Texto</button>
             <div class="progress-bar-container" id="progress-bar-container">
                 <div class="progress-bar" id="progress-bar"></div>
-                <div class="progress-text" id="progress-text">0%</div>
             </div>
-            <table id="data-table">
+            <div>
+                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
+                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
+            </div>
+            <table>
                 <thead>
                     <tr>
                         <th>Factura</th>
@@ -149,117 +149,128 @@
                         <th>Condiciones Crédito</th>
                         <th>Pendientes</th>
                         <th>Perdido</th>
+                        <th>Eliminar</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Datos dinámicos -->
+                <tbody id="invoice-table">
+                    <!-- Filas se agregarán dinámicamente -->
                 </tbody>
             </table>
         </section>
     </main>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <footer>
+        <p>Sistema de Facturación Inteligente - 2024</p>
+    </footer>
     <script>
-        const fileUpload = document.getElementById("file-upload");
-        const textInput = document.getElementById("text-input");
-        const dataTable = document.getElementById("data-table");
-        const exportButton = document.getElementById("export-excel");
-        const progressBarContainer = document.getElementById("progress-bar-container");
-        const progressBar = document.getElementById("progress-bar");
-        const progressText = document.getElementById("progress-text");
-        let tableData = [];
+        const PASSWORD = "mcm352";
+        let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
 
-        // Leer y procesar archivo Excel
-        fileUpload.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: "array" });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[firstSheetName];
-                    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    processExcelData(rawData);
-                };
-                reader.readAsArrayBuffer(file);
+        document.getElementById("login-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const password = document.getElementById("password").value;
+            if (password === PASSWORD) {
+                document.getElementById("login-section").style.display = "none";
+                document.querySelector("main").style.display = "block";
+                updateFacturaCount();
+            } else {
+                document.getElementById("login-error").style.display = "block";
             }
         });
 
-        // Procesar datos de Excel
-        function processExcelData(data) {
-            showProgress(data.length, "Procesando Excel");
-            tableData = data.slice(1).map((row, index) => {
-                updateProgress(index + 1, data.length);
-                return row.reduce((acc, cell, i) => {
-                    acc[data[0][i] || `Columna ${i + 1}`] = cell || "No encontrado";
-                    return acc;
-                }, {});
-            });
-            renderTable(tableData);
-        }
-
-        // Procesar texto pegado
         document.getElementById("process-text").addEventListener("click", () => {
-            const text = textInput.value.trim();
+            const text = document.getElementById("text-input").value.trim();
             if (!text) {
                 alert("Por favor, pega el texto de las facturas.");
                 return;
             }
-            const lines = text.split("\n");
-            showProgress(lines.length, "Procesando Texto");
-            tableData = lines.map((line, index) => {
-                updateProgress(index + 1, lines.length);
-                const columns = line.split(/\s+/); // Separar por espacios o tabulaciones
-                return {
-                    Factura: columns[0] || "No encontrado",
-                    Fecha: columns[1] || "No encontrado",
-                    Cliente: columns[2] || "No encontrado",
-                    // Continúa asignando las columnas...
-                };
-            });
-            renderTable(tableData);
-        });
 
-        // Mostrar barra de progreso
-        function showProgress(total, message) {
+            const rows = text.split(/\n/).map(line => line.trim()).filter(line => line);
+            const progressBar = document.getElementById("progress-bar");
+            const progressBarContainer = document.getElementById("progress-bar-container");
             progressBarContainer.style.display = "block";
-            progressBar.style.width = "0%";
-            progressText.textContent = `${message}: 0%`;
-        }
 
-        // Actualizar barra de progreso
-        function updateProgress(current, total) {
-            const percentage = Math.round((current / total) * 100);
-            progressBar.style.width = `${percentage}%`;
-            progressText.textContent = `${percentage}%`;
-        }
+            rows.forEach((row, index) => {
+                setTimeout(() => {
+                    const columns = row.split(/\s+/); // Ajustar según la estructura exacta
+                    if (columns.length >= 29) { // Adaptar al número de clasificaciones
+                        invoices.push({
+                            factura: columns[0],
+                            fecha: columns[1],
+                            fecha_entrega: columns[2],
+                            cliente: columns[3],
+                            ruc: columns[4],
+                            provincia: columns[5],
+                            ciudad: columns[6],
+                            lista_precio: columns[7],
+                            canal: columns[8],
+                            sub_canal: columns[9],
+                            vendedor: columns[10],
+                            cuentas: columns[11],
+                            codigo: columns[12],
+                            modelo: columns[13],
+                            proveedor: columns[14],
+                            cantidad: columns[15],
+                            costo_unitario: columns[16],
+                            costo_total: columns[17],
+                            iva_pagado: columns[18],
+                            precio_unitario: columns[19],
+                            precio_total: columns[20],
+                            iva_cobrado: columns[21],
+                            total_facturado: columns[22],
+                            utilidad: columns[23],
+                            credito: columns[24],
+                            condiciones_credito: columns[25],
+                            pendientes: columns[26],
+                            perdido: columns[27]
+                        });
+                    }
 
-        // Renderizar tabla
-        function renderTable(data) {
-            const tbody = dataTable.querySelector("tbody");
-            tbody.innerHTML = ""; // Limpiar datos existentes
-            data.forEach((row) => {
-                const tr = document.createElement("tr");
-                Object.values(row).forEach((cell) => {
-                    const td = document.createElement("td");
-                    td.textContent = cell;
-                    tr.appendChild(td);
+                    // Actualizar barra de progreso
+                    progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
+
+                    // Finalizar procesamiento
+                    if (index === rows.length - 1) {
+                        progressBarContainer.style.display = "none";
+                        invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenar por fecha
+                        localStorage.setItem("invoices", JSON.stringify(invoices));
+                        populateTable();
+                        updateFacturaCount();
+                    }
+                }, index * 50); // Procesar con retraso para simular progresión
+            });
+        });
+
+        function populateTable() {
+            const tbody = document.getElementById("invoice-table");
+            tbody.innerHTML = "";
+
+            invoices.forEach((invoice, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Eliminar";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.addEventListener("click", () => {
+                    invoices.splice(index, 1);
+                    localStorage.setItem("invoices", JSON.stringify(invoices));
+                    populateTable();
+                    updateFacturaCount();
                 });
-                tbody.appendChild(tr);
+                const deleteCell = document.createElement("td");
+                deleteCell.appendChild(deleteBtn);
+                row.appendChild(deleteCell);
+                tbody.appendChild(row);
             });
         }
 
-        // Exportar tabla a Excel
-        exportButton.addEventListener("click", () => {
-            if (tableData.length === 0) {
-                alert("No hay datos para exportar.");
-                return;
-            }
-            const ws = XLSX.utils.json_to_sheet(tableData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Datos");
-            XLSX.writeFile(wb, "TablaProcesada.xlsx");
+        function updateFacturaCount() {
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            populateTable();
+            updateFacturaCount();
         });
-    </script>
-</body>
-</html>
+
+        document.getElementById("search-bar").addEventListener("input", (e) => {
+            const query = e.target.value
