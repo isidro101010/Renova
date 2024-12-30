@@ -88,6 +88,11 @@
             width: 0%;
             transition: width 0.5s;
         }
+        .remaining-time {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -109,59 +114,71 @@
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
-            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
-            <button id="process-text">Procesar Texto</button>
-            <div class="progress-bar-container" id="progress-bar-container">
-                <div class="progress-bar" id="progress-bar"></div>
+            <div class="progress-bar-container" id="progress-bar-container-xml">
+                <div class="progress-bar" id="progress-bar-xml"></div>
+                <div class="remaining-time" id="remaining-time-xml"></div>
             </div>
-            <div>
-                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
-                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Factura</th>
-                        <th>Fecha</th>
-                        <th>Fecha Entrega</th>
-                        <th>Cliente</th>
-                        <th>RUC</th>
-                        <th>Provincia</th>
-                        <th>Ciudad</th>
-                        <th>Lista Precio</th>
-                        <th>Canal</th>
-                        <th>Sub Canal</th>
-                        <th>Vendedor</th>
-                        <th>Cuentas</th>
-                        <th>Código</th>
-                        <th>Modelo</th>
-                        <th>Proveedor</th>
-                        <th>Cantidad</th>
-                        <th>Costo Unitario</th>
-                        <th>Costo Total</th>
-                        <th>IVA Pagado</th>
-                        <th>Precio Unitario</th>
-                        <th>Precio Total</th>
-                        <th>IVA Cobrado</th>
-                        <th>Total Facturado</th>
-                        <th>Utilidad</th>
-                        <th>Crédito</th>
-                        <th>Condiciones Crédito</th>
-                        <th>Pendientes</th>
-                        <th>Perdido</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody id="invoice-table">
-                    <!-- Filas se agregarán dinámicamente -->
-                </tbody>
-            </table>
         </section>
         <section>
             <h2>Procesar Imagen</h2>
             <input type="file" id="image-upload" accept="image/*">
             <button id="process-image">Procesar Imagen</button>
+            <div class="progress-bar-container" id="progress-bar-container-image">
+                <div class="progress-bar" id="progress-bar-image"></div>
+                <div class="remaining-time" id="remaining-time-image"></div>
+            </div>
         </section>
+        <section>
+            <h2>Procesar Texto</h2>
+            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
+            <button id="process-text">Procesar Texto</button>
+            <div class="progress-bar-container" id="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+                <div class="remaining-time" id="remaining-time"></div>
+            </div>
+        </section>
+        <div>
+            <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
+            <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Factura</th>
+                    <th>Fecha</th>
+                    <th>Fecha Entrega</th>
+                    <th>Cliente</th>
+                    <th>RUC</th>
+                    <th>Provincia</th>
+                    <th>Ciudad</th>
+                    <th>Lista Precio</th>
+                    <th>Canal</th>
+                    <th>Sub Canal</th>
+                    <th>Vendedor</th>
+                    <th>Cuentas</th>
+                    <th>Código</th>
+                    <th>Modelo</th>
+                    <th>Proveedor</th>
+                    <th>Cantidad</th>
+                    <th>Costo Unitario</th>
+                    <th>Costo Total</th>
+                    <th>IVA Pagado</th>
+                    <th>Precio Unitario</th>
+                    <th>Precio Total</th>
+                    <th>IVA Cobrado</th>
+                    <th>Total Facturado</th>
+                    <th>Utilidad</th>
+                    <th>Crédito</th>
+                    <th>Condiciones Crédito</th>
+                    <th>Pendientes</th>
+                    <th>Perdido</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-table">
+                <!-- Filas se agregarán dinámicamente -->
+            </tbody>
+        </table>
     </main>
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
@@ -183,6 +200,19 @@
             }
         });
 
+        document.getElementById("process-image").addEventListener("click", () => {
+            const file = document.getElementById('image-upload').files[0];
+            if (file) {
+                Tesseract.recognize(file, 'spa', { logger: m => console.log(m) })
+                    .then(({ data: { text } }) => {
+                        document.getElementById('text-input').value = text;
+                        alert('Texto extraído de la imagen y pegado en la página.');
+                    });
+            } else {
+                alert('Por favor, sube una imagen.');
+            }
+        });
+
         document.getElementById("process-text").addEventListener("click", () => {
             const text = document.getElementById("text-input").value.trim();
             if (!text) {
@@ -193,12 +223,14 @@
             const rows = text.split(/\n/).map(line => line.trim()).filter(line => line);
             const progressBar = document.getElementById("progress-bar");
             const progressBarContainer = document.getElementById("progress-bar-container");
+            const remainingTime = document.getElementById("remaining-time");
             progressBarContainer.style.display = "block";
 
+            let startTime = Date.now();
             rows.forEach((row, index) => {
                 setTimeout(() => {
-                    const columns = row.split(/\s+/); // Ajustar según la estructura exacta
-                    if (columns.length >= 29) { // Adaptar al número de clasificaciones
+                    const columns = row.split(/\s+/);
+                    if (columns.length >= 29) {
                         invoices.push({
                             factura: columns[0],
                             fecha: columns[1],
@@ -231,31 +263,66 @@
                         });
                     }
 
-                    // Actualizar barra de progreso
                     progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
 
-                    // Finalizar procesamiento
+                    // Calculate remaining time
+                    let elapsedTime = Date.now() - startTime;
+                    let remainingTimeMs = (elapsedTime / (index + 1)) * (rows.length - index - 1);
+                    remainingTime.textContent = `Tiempo restante: ${(remainingTimeMs / 1000).toFixed(2)} segundos`;
+
                     if (index === rows.length - 1) {
                         progressBarContainer.style.display = "none";
-                        invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenar por fecha
+                        remainingTime.textContent = "";
+                        invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
                         localStorage.setItem("invoices", JSON.stringify(invoices));
                         populateTable();
                         updateFacturaCount();
                     }
-                }, index * 50); // Procesar con retraso para simular progresión
+                }, index * 50);
             });
         });
 
-        document.getElementById("process-image").addEventListener("click", () => {
-            const file = document.getElementById('image-upload').files[0];
+        document.getElementById("upload-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const file = document.getElementById('file-upload').files[0];
             if (file) {
-                Tesseract.recognize(file, 'spa', { logger: m => console.log(m) })
-                    .then(({ data: { text } }) => {
-                        document.getElementById('text-input').value = text;
-                        alert('Texto extraído de la imagen y pegado en la página.');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    const rows = text.split(/<\?xml/).map(line => `<?xml${line.trim()}`).filter(line => line);
+
+                    const progressBar = document.getElementById("progress-bar-xml");
+                    const progressBarContainer = document.getElementById("progress-bar-container-xml");
+                    const remainingTime = document.getElementById("remaining-time-xml");
+                    progressBarContainer.style.display = "block";
+
+                    let startTime = Date.now();
+                    rows.forEach((row, index) => {
+                        setTimeout(() => {
+                            // Process each XML row here
+                            // Example: invoices.push(parseXML(row));
+
+                            progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
+
+                            // Calculate remaining time
+                            let elapsedTime = Date.now() - startTime;
+                            let remainingTimeMs = (elapsedTime / (index + 1)) * (rows.length - index - 1);
+                            remainingTime.textContent = `Tiempo restante: ${(remainingTimeMs / 1000).toFixed(2)} segundos`;
+
+                            if (index === rows.length - 1) {
+                                progressBarContainer.style.display = "none";
+                                remainingTime.textContent = "";
+                                // Save and display invoices
+                                localStorage.setItem("invoices", JSON.stringify(invoices));
+                                populateTable();
+                                updateFacturaCount();
+                            }
+                        }, index * 50);
                     });
+                };
+                reader.readAsText(file);
             } else {
-                alert('Por favor, sube una imagen.');
+                alert('Por favor, sube un archivo XML.');
             }
         });
 
