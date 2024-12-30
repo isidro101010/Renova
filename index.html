@@ -157,10 +157,16 @@
                 </tbody>
             </table>
         </section>
+        <section>
+            <h2>Procesar Imagen</h2>
+            <input type="file" id="image-upload" accept="image/*">
+            <button id="process-image">Procesar Imagen</button>
+        </section>
     </main>
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.1/dist/tesseract.min.js"></script>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
@@ -240,6 +246,19 @@
             });
         });
 
+        document.getElementById("process-image").addEventListener("click", () => {
+            const file = document.getElementById('image-upload').files[0];
+            if (file) {
+                Tesseract.recognize(file, 'spa', { logger: m => console.log(m) })
+                    .then(({ data: { text } }) => {
+                        document.getElementById('text-input').value = text;
+                        alert('Texto extraído de la imagen y pegado en la página.');
+                    });
+            } else {
+                alert('Por favor, sube una imagen.');
+            }
+        });
+
         function populateTable() {
             const tbody = document.getElementById("invoice-table");
             tbody.innerHTML = "";
@@ -273,4 +292,9 @@
         });
 
         document.getElementById("search-bar").addEventListener("input", (e) => {
-            const query = e.target.value
+            const query = e.target.value;
+            // Implement search functionality if needed
+        });
+    </script>
+</body>
+</html>
