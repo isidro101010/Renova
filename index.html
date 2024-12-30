@@ -17,9 +17,24 @@
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
         h1 {
             margin: 0;
+        }
+        .export-excel-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .export-excel-btn:hover {
+            background-color: #45a049;
         }
         main {
             padding: 20px;
@@ -75,29 +90,12 @@
             font-weight: bold;
             margin: 10px 0;
         }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #ddd;
-            height: 20px;
-            margin: 10px 0;
-            display: none;
-        }
-        .progress-bar {
-            height: 100%;
-            background-color: #4caf50;
-            width: 0%;
-            transition: width 0.5s;
-        }
-        .remaining-time {
-            text-align: right;
-            font-size: 12px;
-            color: #666;
-        }
     </style>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
+        <button class="export-excel-btn" id="export-excel">Excel</button>
     </header>
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
@@ -114,216 +112,138 @@
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
-            <div class="progress-bar-container" id="progress-bar-container-xml">
-                <div class="progress-bar" id="progress-bar-xml"></div>
-                <div class="remaining-time" id="remaining-time-xml"></div>
-            </div>
-        </section>
-        <section>
-            <h2>Procesar Imagen</h2>
-            <input type="file" id="image-upload" accept="image/*">
-            <button id="process-image">Procesar Imagen</button>
-            <div class="progress-bar-container" id="progress-bar-container-image">
-                <div class="progress-bar" id="progress-bar-image"></div>
-                <div class="remaining-time" id="remaining-time-image"></div>
-            </div>
-        </section>
-        <section>
-            <h2>Procesar Texto</h2>
             <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
             <button id="process-text">Procesar Texto</button>
-            <div class="progress-bar-container" id="progress-bar-container">
-                <div class="progress-bar" id="progress-bar"></div>
-                <div class="remaining-time" id="remaining-time"></div>
+            <div>
+                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
+                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factura</th>
+                        <th>Fecha</th>
+                        <th>Fecha Entrega</th>
+                        <th>Cliente</th>
+                        <th>RUC</th>
+                        <th>Provincia</th>
+                        <th>Ciudad</th>
+                        <th>Lista Precio</th>
+                        <th>Canal</th>
+                        <th>Sub Canal</th>
+                        <th>Vendedor</th>
+                        <th>Cuentas</th>
+                        <th>Código</th>
+                        <th>Modelo</th>
+                        <th>Proveedor</th>
+                        <th>Cantidad</th>
+                        <th>Costo Unitario</th>
+                        <th>Costo Total</th>
+                        <th>IVA Pagado</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Total</th>
+                        <th>IVA Cobrado</th>
+                        <th>Total Facturado</th>
+                        <th>Utilidad</th>
+                        <th>Crédito</th>
+                        <th>Condiciones Crédito</th>
+                        <th>Pendientes</th>
+                        <th>Perdido</th>
+                        <th>Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-table">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
         </section>
-        <div>
-            <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
-            <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Factura</th>
-                    <th>Fecha</th>
-                    <th>Fecha Entrega</th>
-                    <th>Cliente</th>
-                    <th>RUC</th>
-                    <th>Provincia</th>
-                    <th>Ciudad</th>
-                    <th>Lista Precio</th>
-                    <th>Canal</th>
-                    <th>Sub Canal</th>
-                    <th>Vendedor</th>
-                    <th>Cuentas</th>
-                    <th>Código</th>
-                    <th>Modelo</th>
-                    <th>Proveedor</th>
-                    <th>Cantidad</th>
-                    <th>Costo Unitario</th>
-                    <th>Costo Total</th>
-                    <th>IVA Pagado</th>
-                    <th>Precio Unitario</th>
-                    <th>Precio Total</th>
-                    <th>IVA Cobrado</th>
-                    <th>Total Facturado</th>
-                    <th>Utilidad</th>
-                    <th>Crédito</th>
-                    <th>Condiciones Crédito</th>
-                    <th>Pendientes</th>
-                    <th>Perdido</th>
-                    <th>Eliminar</th>
-                </tr>
-            </thead>
-            <tbody id="invoice-table">
-                <!-- Filas se agregarán dinámicamente -->
-            </tbody>
-        </table>
     </main>
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.1/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
 
         document.getElementById("login-form").addEventListener("submit", (e) => {
             e.preventDefault();
-            const password = document.getElementById("password").value;
-            if (password === PASSWORD) {
+            const enteredPassword = document.getElementById("password").value.trim();
+            if (enteredPassword === PASSWORD) {
                 document.getElementById("login-section").style.display = "none";
                 document.querySelector("main").style.display = "block";
+                populateTable();
                 updateFacturaCount();
             } else {
                 document.getElementById("login-error").style.display = "block";
             }
         });
 
-        document.getElementById("process-image").addEventListener("click", () => {
-            const file = document.getElementById('image-upload').files[0];
+        document.getElementById("upload-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const file = document.getElementById("file-upload").files[0];
             if (file) {
-                Tesseract.recognize(file, 'spa', { logger: m => console.log(m) })
-                    .then(({ data: { text } }) => {
-                        document.getElementById('text-input').value = text;
-                        alert('Texto extraído de la imagen y pegado en la página.');
-                    });
-            } else {
-                alert('Por favor, sube una imagen.');
-            }
-        });
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(this.result, "application/xml");
+                    const cdata = xml.querySelector("comprobante")?.textContent.trim();
 
-        document.getElementById("process-text").addEventListener("click", () => {
-            const text = document.getElementById("text-input").value.trim();
-            if (!text) {
-                alert("Por favor, pega el texto de las facturas.");
-                return;
-            }
-
-            const rows = text.split(/\n/).map(line => line.trim()).filter(line => line);
-            const progressBar = document.getElementById("progress-bar");
-            const progressBarContainer = document.getElementById("progress-bar-container");
-            const remainingTime = document.getElementById("remaining-time");
-            progressBarContainer.style.display = "block";
-
-            let startTime = Date.now();
-            rows.forEach((row, index) => {
-                setTimeout(() => {
-                    const columns = row.split(/\s+/);
-                    if (columns.length >= 29) {
-                        invoices.push({
-                            factura: columns[0],
-                            fecha: columns[1],
-                            fecha_entrega: columns[2],
-                            cliente: columns[3],
-                            ruc: columns[4],
-                            provincia: columns[5],
-                            ciudad: columns[6],
-                            lista_precio: columns[7],
-                            canal: columns[8],
-                            sub_canal: columns[9],
-                            vendedor: columns[10],
-                            cuentas: columns[11],
-                            codigo: columns[12],
-                            modelo: columns[13],
-                            proveedor: columns[14],
-                            cantidad: columns[15],
-                            costo_unitario: columns[16],
-                            costo_total: columns[17],
-                            iva_pagado: columns[18],
-                            precio_unitario: columns[19],
-                            precio_total: columns[20],
-                            iva_cobrado: columns[21],
-                            total_facturado: columns[22],
-                            utilidad: columns[23],
-                            credito: columns[24],
-                            condiciones_credito: columns[25],
-                            pendientes: columns[26],
-                            perdido: columns[27]
-                        });
-                    }
-
-                    progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
-
-                    // Calculate remaining time
-                    let elapsedTime = Date.now() - startTime;
-                    let remainingTimeMs = (elapsedTime / (index + 1)) * (rows.length - index - 1);
-                    remainingTime.textContent = `Tiempo restante: ${(remainingTimeMs / 1000).toFixed(2)} segundos`;
-
-                    if (index === rows.length - 1) {
-                        progressBarContainer.style.display = "none";
-                        remainingTime.textContent = "";
-                        invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                    if (cdata) {
+                        const cdataXML = new DOMParser().parseFromString(cdata, "application/xml");
+                        const invoice = processXMLData(cdataXML);
+                        invoices.push(...invoice);
                         localStorage.setItem("invoices", JSON.stringify(invoices));
                         populateTable();
                         updateFacturaCount();
+                    } else {
+                        alert("No se encontró información válida en el archivo XML.");
                     }
-                }, index * 50);
-            });
-        });
-
-        document.getElementById("upload-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const file = document.getElementById('file-upload').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    const rows = text.split(/<\?xml/).map(line => `<?xml${line.trim()}`).filter(line => line);
-
-                    const progressBar = document.getElementById("progress-bar-xml");
-                    const progressBarContainer = document.getElementById("progress-bar-container-xml");
-                    const remainingTime = document.getElementById("remaining-time-xml");
-                    progressBarContainer.style.display = "block";
-
-                    let startTime = Date.now();
-                    rows.forEach((row, index) => {
-                        setTimeout(() => {
-                            // Process each XML row here
-                            // Example: invoices.push(parseXML(row));
-
-                            progressBar.style.width = `${((index + 1) / rows.length) * 100}%`;
-
-                            // Calculate remaining time
-                            let elapsedTime = Date.now() - startTime;
-                            let remainingTimeMs = (elapsedTime / (index + 1)) * (rows.length - index - 1);
-                            remainingTime.textContent = `Tiempo restante: ${(remainingTimeMs / 1000).toFixed(2)} segundos`;
-
-                            if (index === rows.length - 1) {
-                                progressBarContainer.style.display = "none";
-                                remainingTime.textContent = "";
-                                // Save and display invoices
-                                localStorage.setItem("invoices", JSON.stringify(invoices));
-                                populateTable();
-                                updateFacturaCount();
-                            }
-                        }, index * 50);
-                    });
                 };
                 reader.readAsText(file);
-            } else {
-                alert('Por favor, sube un archivo XML.');
             }
+        });
+
+        function processXMLData(xml) {
+            const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
+            const models = Array.from(xml.querySelectorAll("detalles > detalle"));
+            return models.map(model => ({
+                factura: getTagValue("infoTributaria > secuencial"),
+                fecha: getTagValue("infoFactura > fechaEmision"),
+                fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
+                cliente: getTagValue("infoFactura > razonSocialComprador"),
+                ruc: getTagValue("infoFactura > identificacionComprador"),
+                provincia: getTagValue("infoFactura > direccionComprador"),
+                ciudad: getTagValue("infoFactura > direccionComprador"),
+                lista_precio: getTagValue("infoFactura > listaPrecio"),
+                canal: getTagValue("infoFactura > canal"),
+                sub_canal: getTagValue("infoFactura > subCanal"),
+                vendedor: getTagValue("infoFactura > vendedor"),
+                cuentas: getTagValue("infoFactura > cuentas"),
+                codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+                modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+                proveedor: getTagValue("infoFactura > proveedor"),
+                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                total_facturado: getTagValue("infoFactura > importeTotal"),
+                utilidad: getTagValue("infoFactura > utilidad"),
+                credito: getTagValue("infoFactura > credito"),
+                condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+                pendientes: getTagValue("infoFactura > pendientes"),
+                perdido: getTagValue("infoFactura > perdido")
+            }));
+        }
+
+        document.getElementById("export-excel").addEventListener("click", () => {
+            const ws = XLSX.utils.json_to_sheet(invoices);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Facturas");
+            XLSX.writeFile(wb, "Facturas.xlsx");
         });
 
         function populateTable() {
@@ -356,11 +276,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             populateTable();
             updateFacturaCount();
-        });
-
-        document.getElementById("search-bar").addEventListener("input", (e) => {
-            const query = e.target.value;
-            // Implement search functionality if needed
         });
     </script>
 </body>
