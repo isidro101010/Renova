@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Facturación Inteligente</title>
+    <title>Procesar Excel y Texto</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -38,25 +38,6 @@
         }
         main {
             padding: 20px;
-            display: none;
-        }
-        form {
-            margin: 20px 0;
-        }
-        textarea, input, button {
-            margin: 5px 0;
-            padding: 10px;
-            width: 100%;
-            max-width: 400px;
-        }
-        button {
-            background-color: #ff6600;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #cc5200;
         }
         table {
             width: 100%;
@@ -79,46 +60,65 @@
         tbody tr:hover {
             background-color: #f1f1f1;
         }
-        .delete-btn {
-            background-color: red;
+        button {
+            background-color: #4caf50;
             color: white;
             border: none;
-            padding: 5px;
+            padding: 10px 15px;
             cursor: pointer;
-        }
-        .factura-count {
-            font-weight: bold;
             margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="file"], textarea {
+            margin: 10px 0;
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #ddd;
+            height: 20px;
+            margin: 10px 0;
+            position: relative;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 0;
+            line-height: 20px;
+            color: #333;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Sistema de Facturación Inteligente</h1>
+        <h1>Procesar Archivo y Texto</h1>
         <button class="export-excel-btn" id="export-excel">Excel</button>
     </header>
-    <div id="login-section">
-        <h2>Acceso al Sistema</h2>
-        <form id="login-form">
-            <input type="password" id="password" placeholder="Contraseña" required>
-            <button type="submit">Ingresar</button>
-        </form>
-        <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
-    </div>
     <main>
         <section>
-            <h2>Cargar Facturas</h2>
-            <form id="upload-form">
-                <input type="file" id="file-upload" accept=".xml">
-                <button type="submit">Subir Factura XML</button>
-            </form>
-            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
+            <h2>Subir Archivo Excel</h2>
+            <input type="file" id="file-upload" accept=".xls, .xlsx">
+            <h2>Procesar Texto</h2>
+            <textarea id="text-input" rows="5" placeholder="Pega aquí los datos de las facturas"></textarea>
             <button id="process-text">Procesar Texto</button>
-            <div>
-                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
-                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
+            <div class="progress-bar-container" id="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+                <div class="progress-text" id="progress-text">0%</div>
             </div>
-            <table>
+            <table id="data-table">
                 <thead>
                     <tr>
                         <th>Factura</th>
@@ -149,133 +149,116 @@
                         <th>Condiciones Crédito</th>
                         <th>Pendientes</th>
                         <th>Perdido</th>
-                        <th>Eliminar</th>
                     </tr>
                 </thead>
-                <tbody id="invoice-table">
-                    <!-- Filas dinámicas -->
+                <tbody>
+                    <!-- Datos dinámicos -->
                 </tbody>
             </table>
         </section>
     </main>
-    <footer>
-        <p>Sistema de Facturación Inteligente - 2024</p>
-    </footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        const PASSWORD = "mcm352";
-        let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
+        const fileUpload = document.getElementById("file-upload");
+        const textInput = document.getElementById("text-input");
+        const dataTable = document.getElementById("data-table");
+        const exportButton = document.getElementById("export-excel");
+        const progressBarContainer = document.getElementById("progress-bar-container");
+        const progressBar = document.getElementById("progress-bar");
+        const progressText = document.getElementById("progress-text");
+        let tableData = [];
 
-        document.getElementById("login-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const enteredPassword = document.getElementById("password").value.trim();
-            if (enteredPassword === PASSWORD) {
-                document.getElementById("login-section").style.display = "none";
-                document.querySelector("main").style.display = "block";
-                populateTable();
-                updateFacturaCount();
-            } else {
-                document.getElementById("login-error").style.display = "block";
-            }
-        });
-
-        document.getElementById("upload-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const file = document.getElementById("file-upload").files[0];
+        // Leer y procesar archivo Excel
+        fileUpload.addEventListener("change", (event) => {
+            const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function () {
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(this.result, "application/xml");
-                    const cdata = xml.querySelector("comprobante")?.textContent.trim();
-
-                    if (cdata) {
-                        const cdataXML = new DOMParser().parseFromString(cdata, "application/xml");
-                        const invoice = processXMLData(cdataXML);
-                        invoices.push(...invoice);
-                        localStorage.setItem("invoices", JSON.stringify(invoices));
-                        populateTable();
-                        updateFacturaCount();
-                    } else {
-                        alert("No se encontró información válida en el archivo XML.");
-                    }
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: "array" });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[firstSheetName];
+                    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    processExcelData(rawData);
                 };
-                reader.readAsText(file);
+                reader.readAsArrayBuffer(file);
             }
         });
 
-        function processXMLData(xml) {
-            const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
-            const models = Array.from(xml.querySelectorAll("detalles > detalle"));
-            return models.map(model => ({
-                factura: getTagValue("infoTributaria > secuencial"),
-                fecha: getTagValue("infoFactura > fechaEmision"),
-                fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
-                cliente: getTagValue("infoFactura > razonSocialComprador"),
-                ruc: getTagValue("infoFactura > identificacionComprador"),
-                provincia: getTagValue("infoFactura > direccionComprador"),
-                ciudad: getTagValue("infoFactura > direccionComprador"),
-                lista_precio: getTagValue("infoFactura > listaPrecio"),
-                canal: getTagValue("infoFactura > canal"),
-                sub_canal: getTagValue("infoFactura > subCanal"),
-                vendedor: getTagValue("infoFactura > vendedor"),
-                cuentas: getTagValue("infoFactura > cuentas"),
-                codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
-                modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
-                proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
-                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                total_facturado: getTagValue("infoFactura > importeTotal"),
-                utilidad: getTagValue("infoFactura > utilidad"),
-                credito: getTagValue("infoFactura > credito"),
-                condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
-                pendientes: getTagValue("infoFactura > pendientes"),
-                perdido: getTagValue("infoFactura > perdido")
-            }));
+        // Procesar datos de Excel
+        function processExcelData(data) {
+            showProgress(data.length, "Procesando Excel");
+            tableData = data.slice(1).map((row, index) => {
+                updateProgress(index + 1, data.length);
+                return row.reduce((acc, cell, i) => {
+                    acc[data[0][i] || `Columna ${i + 1}`] = cell || "No encontrado";
+                    return acc;
+                }, {});
+            });
+            renderTable(tableData);
         }
 
-        document.getElementById("export-excel").addEventListener("click", () => {
-            const ws = XLSX.utils.json_to_sheet(invoices);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Facturas");
-            XLSX.writeFile(wb, "Facturas.xlsx");
+        // Procesar texto pegado
+        document.getElementById("process-text").addEventListener("click", () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                alert("Por favor, pega el texto de las facturas.");
+                return;
+            }
+            const lines = text.split("\n");
+            showProgress(lines.length, "Procesando Texto");
+            tableData = lines.map((line, index) => {
+                updateProgress(index + 1, lines.length);
+                const columns = line.split(/\s+/); // Separar por espacios o tabulaciones
+                return {
+                    Factura: columns[0] || "No encontrado",
+                    Fecha: columns[1] || "No encontrado",
+                    Cliente: columns[2] || "No encontrado",
+                    // Continúa asignando las columnas...
+                };
+            });
+            renderTable(tableData);
         });
 
-        function populateTable() {
-            const tbody = document.getElementById("invoice-table");
-            tbody.innerHTML = "";
+        // Mostrar barra de progreso
+        function showProgress(total, message) {
+            progressBarContainer.style.display = "block";
+            progressBar.style.width = "0%";
+            progressText.textContent = `${message}: 0%`;
+        }
 
-            invoices.forEach((invoice, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
-                const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Eliminar";
-                deleteBtn.classList.add("delete-btn");
-                deleteBtn.addEventListener("click", () => {
-                    invoices.splice(index, 1);
-                    localStorage.setItem("invoices", JSON.stringify(invoices));
-                    populateTable();
-                    updateFacturaCount();
+        // Actualizar barra de progreso
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+        }
+
+        // Renderizar tabla
+        function renderTable(data) {
+            const tbody = dataTable.querySelector("tbody");
+            tbody.innerHTML = ""; // Limpiar datos existentes
+            data.forEach((row) => {
+                const tr = document.createElement("tr");
+                Object.values(row).forEach((cell) => {
+                    const td = document.createElement("td");
+                    td.textContent = cell;
+                    tr.appendChild(td);
                 });
-                const deleteCell = document.createElement("td");
-                deleteCell.appendChild(deleteBtn);
-                row.appendChild(deleteCell);
-                tbody.appendChild(row);
+                tbody.appendChild(tr);
             });
         }
 
-        function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            populateTable();
-            updateFacturaCount();
+        // Exportar tabla a Excel
+        exportButton.addEventListener("click", () => {
+            if (tableData.length === 0) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+            const ws = XLSX.utils.json_to_sheet(tableData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Datos");
+            XLSX.writeFile(wb, "TablaProcesada.xlsx");
         });
     </script>
 </body>
