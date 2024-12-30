@@ -76,19 +76,6 @@
             font-weight: bold;
             margin: 10px 0;
         }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #ddd;
-            height: 20px;
-            margin: 10px 0;
-            display: none;
-        }
-        .progress-bar {
-            height: 100%;
-            background-color: #4caf50;
-            width: 0%;
-            transition: width 0.5s;
-        }
     </style>
 </head>
 <body>
@@ -110,14 +97,8 @@
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
-            <div class="progress-bar-container" id="progress-bar-container-xml">
-                <div class="progress-bar" id="progress-bar-xml"></div>
-            </div>
             <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
             <button id="process-text">Procesar Texto</button>
-            <div class="progress-bar-container" id="progress-bar-container-text">
-                <div class="progress-bar" id="progress-bar-text"></div>
-            </div>
             <div>
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
@@ -204,88 +185,43 @@
                     }
                 };
                 reader.readAsText(file);
-
-                const progressBar = document.getElementById("progress-bar-xml");
-                const progressBarContainer = document.getElementById("progress-bar-container-xml");
-                progressBarContainer.style.display = "block";
-                reader.onprogress = (event) => {
-                    if (event.lengthComputable) {
-                        const percentComplete = (event.loaded / event.total) * 100;
-                        progressBar.style.width = percentComplete + '%';
-                    }
-                };
-                reader.onloadend = () => {
-                    progressBarContainer.style.display = "none";
-                };
             }
         });
 
-        document.getElementById("process-text").addEventListener("click", () => {
-            const text = document.getElementById("text-input").value.trim();
-            if (!text) {
-                alert("Por favor, pega el texto de las facturas.");
-                return;
-            }
-
-            const rows = text.split(/\n/).map(line => line.trim()).filter(line => line);
-            const progressBar = document.getElementById("progress-bar-text");
-            const progressBarContainer = document.getElementById("progress-bar-container-text");
-            progressBarContainer.style.display = "block";
-
-            const chunkSize = 1000; // Process 1000 rows at a time
-            function processChunk(startIndex) {
-                const chunk = rows.slice(startIndex, startIndex + chunkSize);
-                chunk.forEach(row => {
-                    const columns = row.split(/\s+/);
-                    if (columns.length >= 29) {
-                        invoices.push({
-                            factura: columns[0],
-                            fecha: columns[1],
-                            fecha_entrega: columns[2],
-                            cliente: columns[3],
-                            ruc: columns[4],
-                            provincia: columns[5],
-                            ciudad: columns[6],
-                            lista_precio: columns[7],
-                            canal: columns[8],
-                            sub_canal: columns[9],
-                            vendedor: columns[10],
-                            cuentas: columns[11],
-                            codigo: columns[12],
-                            modelo: columns[13],
-                            proveedor: columns[14],
-                            cantidad: columns[15],
-                            costo_unitario: columns[16],
-                            costo_total: columns[17],
-                            iva_pagado: columns[18],
-                            precio_unitario: columns[19],
-                            precio_total: columns[20],
-                            iva_cobrado: columns[21],
-                            total_facturado: columns[22],
-                            utilidad: columns[23],
-                            credito: columns[24],
-                            condiciones_credito: columns[25],
-                            pendientes: columns[26],
-                            perdido: columns[27]
-                        });
-                    }
-                });
-
-                progressBar.style.width = `${((startIndex + chunkSize) / rows.length) * 100}%`;
-
-                if (startIndex + chunkSize < rows.length) {
-                    setTimeout(() => processChunk(startIndex + chunkSize), 0);
-                } else {
-                    progressBarContainer.style.display = "none";
-                    invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                    localStorage.setItem("invoices", JSON.stringify(invoices));
-                    populateTable();
-                    updateFacturaCount();
-                }
-            }
-
-            processChunk(0);
-        });
+        function processXMLData(xml) {
+            const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
+            const models = Array.from(xml.querySelectorAll("detalles > detalle"));
+            return models.map(model => ({
+                factura: getTagValue("infoTributaria > secuencial"),
+                fecha: getTagValue("infoFactura > fechaEmision"),
+                fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
+                cliente: getTagValue("infoFactura > razonSocialComprador"),
+                ruc: getTagValue("infoFactura > identificacionComprador"),
+                provincia: getTagValue("infoFactura > direccionComprador"),
+                ciudad: getTagValue("infoFactura > direccionComprador"),
+                lista_precio: getTagValue("infoFactura > listaPrecio"),
+                canal: getTagValue("infoFactura > canal"),
+                sub_canal: getTagValue("infoFactura > subCanal"),
+                vendedor: getTagValue("infoFactura > vendedor"),
+                cuentas: getTagValue("infoFactura > cuentas"),
+                codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+                modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+                proveedor: getTagValue("infoFactura > proveedor"),
+                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                total_facturado: getTagValue("infoFactura > importeTotal"),
+                utilidad: getTagValue("infoFactura > utilidad"),
+                credito: getTagValue("infoFactura > credito"),
+                condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+                pendientes: getTagValue("infoFactura > pendientes"),
+                perdido: getTagValue("infoFactura > perdido")
+            }));
+        }
 
         function populateTable() {
             const tbody = document.getElementById("invoice-table");
