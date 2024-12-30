@@ -22,20 +22,6 @@
         h1 {
             margin: 0;
         }
-        .export-excel-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .export-excel-btn:hover {
-            background-color: #45a049;
-        }
         main {
             padding: 20px;
             display: none;
@@ -95,7 +81,6 @@
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
-        <button class="export-excel-btn" id="export-excel">Excel</button>
     </header>
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
@@ -161,7 +146,6 @@
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
@@ -238,13 +222,6 @@
                 perdido: getTagValue("infoFactura > perdido")
             }));
         }
-
-        document.getElementById("export-excel").addEventListener("click", () => {
-            const ws = XLSX.utils.json_to_sheet(invoices);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Facturas");
-            XLSX.writeFile(wb, "Facturas.xlsx");
-        });
 
         function populateTable() {
             const tbody = document.getElementById("invoice-table");
