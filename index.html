@@ -121,7 +121,6 @@
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
-        <button class="export-btn" onclick="exportToExcel()">Exportar a Excel</button>
     </header>
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
@@ -132,6 +131,9 @@
         <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
     </div>
     <main>
+        <header>
+            <button class="export-btn" onclick="exportToExcel()">Exportar a Excel</button>
+        </header>
         <section>
             <h2>Cargar Facturas</h2>
             <form id="upload-form">
@@ -303,7 +305,7 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
             XLSX.utils.book_append_sheet(wb, ws, 'Facturas');
-            XLSX.writeFile(wb, 'Facturas.xlsx');
+            XLSX.writeFile(wb, 'Copia de Cuentas 27 12 2024.xlsx');
         }
     </script>
 </body>
