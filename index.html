@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             color: #333;
+            overflow: hidden; /* Remove scroll bars */
         }
         header {
             background-color: #005f99;
@@ -29,7 +30,7 @@
         form {
             margin: 20px 0;
         }
-        textarea, input, button {
+        input, button {
             margin: 5px 0;
             padding: 10px;
             width: 100%;
@@ -118,8 +119,6 @@
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
-            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
-            <button id="process-text">Procesar Texto</button>
             <div>
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
@@ -167,8 +166,6 @@
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
-    <button class="scroll-top-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">↑</button>
-    <button class="scroll-bottom-btn" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });">↓</button>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
