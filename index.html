@@ -250,15 +250,15 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: parseFloat(model.querySelector("cantidad")?.textContent.trim().replace('.', ',')) || "No encontrado",
-                costo_unitario: parseFloat(model.querySelector("precioUnitario")?.textContent.trim().replace('.', ',')) || "No encontrado",
-                costo_total: parseFloat(model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace('.', ',')) || "No encontrado",
-                iva_pagado: parseFloat(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace('.', ',')),
-                precio_unitario: parseFloat(model.querySelector("precioUnitario")?.textContent.trim().replace('.', ',')) || "No encontrado",
-                precio_total: parseFloat(model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace('.', ',')) || "No encontrado",
-                iva_cobrado: parseFloat(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace('.', ',')),
-                total_facturado: parseFloat(getTagValue("infoFactura > importeTotal").replace('.', ',')),
-                utilidad: parseFloat(getTagValue("infoFactura > utilidad").replace('.', ',')),
+                cantidad: model.querySelector("cantidad")?.textContent.trim().replace('.', ',') || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace('.', ',') || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace('.', ',') || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace('.', ','),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace('.', ',') || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace('.', ',') || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace('.', ','),
+                total_facturado: getTagValue("infoFactura > importeTotal").replace('.', ','),
+                utilidad: getTagValue("infoFactura > utilidad").replace('.', ','),
                 credito: getTagValue("infoFactura > credito"),
                 condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
                 pendientes: getTagValue("infoFactura > pendientes"),
@@ -321,7 +321,7 @@
 
             invoices.forEach(invoice => {
                 XLSX.utils.sheet_add_aoa(worksheet, [
-                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad, invoice.costo_unitario, invoice.costo_total, invoice.iva_pagado, invoice.precio_unitario, invoice.precio_total, invoice.iva_cobrado, invoice.total_facturado, invoice.utilidad, invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
+                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad.replace('.', ','), invoice.costo_unitario.replace('.', ','), invoice.costo_total.replace('.', ','), invoice.iva_pagado.replace('.', ','), invoice.precio_unitario.replace('.', ','), invoice.precio_total.replace('.', ','), invoice.iva_cobrado.replace('.', ','), invoice.total_facturado.replace('.', ','), invoice.utilidad.replace('.', ','), invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
                 ], { origin: -1 });
             });
 
