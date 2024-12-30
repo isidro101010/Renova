@@ -301,11 +301,30 @@
             updateFacturaCount();
         });
 
-        function exportToExcel() {
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
-            XLSX.utils.book_append_sheet(wb, ws, 'Facturas');
-            XLSX.writeFile(wb, 'Copia de Cuentas 27 12 2024.xlsx');
+        async function exportToExcel() {
+            const fileName = 'Copia de Cuentas 27 12 2024.xlsx';
+            let workbook;
+
+            try {
+                const data = await fetch(fileName).then(res => res.arrayBuffer());
+                workbook = XLSX.read(data, { type: 'array' });
+            } catch (e) {
+                workbook = XLSX.utils.book_new();
+            }
+
+            const worksheet = XLSX.utils.aoa_to_sheet([]);
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]
+            ], { origin: -1 });
+
+            invoices.forEach(invoice => {
+                XLSX.utils.sheet_add_aoa(worksheet, [
+                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad, invoice.costo_unitario, invoice.costo_total, invoice.iva_pagado, invoice.precio_unitario, invoice.precio_total, invoice.iva_cobrado, invoice.total_facturado, invoice.utilidad, invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
+                ], { origin: -1 });
+            });
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturas');
+            XLSX.writeFile(workbook, fileName);
         }
     </script>
 </body>
