@@ -45,6 +45,9 @@
         button:hover {
             background-color: #cc5200;
         }
+        .table-wrapper {
+            overflow-x: auto;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -98,11 +101,27 @@
         .scroll-bottom-btn {
             bottom: 80px;
         }
+        .export-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .export-btn:hover {
+            background-color: #218838;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
+        <button class="export-btn" onclick="exportToExcel()">Exportar a Excel</button>
     </header>
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
@@ -123,44 +142,46 @@
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Factura</th>
-                        <th>Fecha</th>
-                        <th>Fecha Entrega</th>
-                        <th>Cliente</th>
-                        <th>RUC</th>
-                        <th>Provincia</th>
-                        <th>Ciudad</th>
-                        <th>Lista Precio</th>
-                        <th>Canal</th>
-                        <th>Sub Canal</th>
-                        <th>Vendedor</th>
-                        <th>Cuentas</th>
-                        <th>Código</th>
-                        <th>Modelo</th>
-                        <th>Proveedor</th>
-                        <th>Cantidad</th>
-                        <th>Costo Unitario</th>
-                        <th>Costo Total</th>
-                        <th>IVA Pagado</th>
-                        <th>Precio Unitario</th>
-                        <th>Precio Total</th>
-                        <th>IVA Cobrado</th>
-                        <th>Total Facturado</th>
-                        <th>Utilidad</th>
-                        <th>Crédito</th>
-                        <th>Condiciones Crédito</th>
-                        <th>Pendientes</th>
-                        <th>Perdido</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody id="invoice-table">
-                    <!-- Filas dinámicas -->
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Fecha Entrega</th>
+                            <th>Cliente</th>
+                            <th>RUC</th>
+                            <th>Provincia</th>
+                            <th>Ciudad</th>
+                            <th>Lista Precio</th>
+                            <th>Canal</th>
+                            <th>Sub Canal</th>
+                            <th>Vendedor</th>
+                            <th>Cuentas</th>
+                            <th>Código</th>
+                            <th>Modelo</th>
+                            <th>Proveedor</th>
+                            <th>Cantidad</th>
+                            <th>Costo Unitario</th>
+                            <th>Costo Total</th>
+                            <th>IVA Pagado</th>
+                            <th>Precio Unitario</th>
+                            <th>Precio Total</th>
+                            <th>IVA Cobrado</th>
+                            <th>Total Facturado</th>
+                            <th>Utilidad</th>
+                            <th>Crédito</th>
+                            <th>Condiciones Crédito</th>
+                            <th>Pendientes</th>
+                            <th>Perdido</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-table">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
     <footer>
@@ -277,6 +298,13 @@
             populateTable();
             updateFacturaCount();
         });
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
+            XLSX.utils.book_append_sheet(wb, ws, 'Facturas');
+            XLSX.writeFile(wb, 'Facturas.xlsx');
+        }
     </script>
 </body>
 </html>
