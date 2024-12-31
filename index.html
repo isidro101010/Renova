@@ -221,7 +221,7 @@
                 cuentas: getTagValue("infoFactura > cuentas"),
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
-                proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "No encontrado", // Campo Proveedor restaurado
+                proveedor: getTagValue("infoFactura > proveedor"),
                 cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
                 costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
                 costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
