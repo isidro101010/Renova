@@ -130,6 +130,15 @@
                     });
                 });
             });
+
+            const allInputs = document.querySelectorAll('input');
+            allInputs.forEach(input => {
+                if (!fieldsToValidate.includes(input.name)) {
+                    input.addEventListener('input', function () {
+                        // Permitir todos los caracteres en otros campos
+                    });
+                }
+            });
         });
     </script>
 </head>
