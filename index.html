@@ -11,18 +11,21 @@
             margin: 0;
             padding: 0;
             color: #333;
+            overflow: hidden; /* Remove scroll bars */
         }
         header {
             background-color: #005f99;
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
         h1 {
             margin: 0;
         }
         main {
             padding: 20px;
+            display: none;
         }
         form {
             margin: 20px 0;
@@ -44,7 +47,6 @@
         }
         .table-wrapper {
             overflow-x: auto;
-            margin-top: 20px;
         }
         table {
             width: 100%;
@@ -54,51 +56,160 @@
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 5px;
+            text-align: center;
             white-space: nowrap;
         }
         th {
             background-color: #005f99;
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
-        .expandable-table {
-            display: block;
-            overflow: auto;
-            max-height: 70vh;
-            margin-top: 10px;
+        tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .factura-count {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .scroll-top-btn, .scroll-bottom-btn {
+            position: fixed;
+            right: 20px;
+            z-index: 3;
+            background-color: #005f99;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .scroll-top-btn {
+            top: 80px;
+        }
+        .scroll-bottom-btn {
+            bottom: 80px;
         }
         .export-btn {
-            margin-top: 10px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
             background-color: #28a745;
             color: white;
-            padding: 10px;
             border: none;
+            padding: 10px 20px;
             cursor: pointer;
             border-radius: 5px;
         }
         .export-btn:hover {
             background-color: #218838;
         }
+        .excel-like-table {
+            width: 100%;
+            height: 500px;
+            overflow: auto;
+        }
+        .excel-like-table table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        .excel-like-table th, .excel-like-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .excel-like-table th {
+            background-color: #f4f4f4;
+            position: sticky;
+            top: 0;
+        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
     </header>
+    <div id="login-section">
+        <h2>Acceso al Sistema</h2>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+        <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
+    </div>
     <main>
+        <header>
+            <button class="export-btn" onclick="exportToExcel()">Exportar a Excel</button>
+        </header>
         <section>
             <h2>Cargar Facturas</h2>
             <form id="upload-form">
-                <input type="file" id="file-upload" accept=".csv">
-                <button type="button" onclick="loadCSV()">Subir Factura CSV</button>
+                <input type="file" id="file-upload" accept=".xml">
+                <button type="submit">Subir Factura XML</button>
             </form>
-        </section>
-        <section>
-            <h2>Facturas</h2>
-            <div class="expandable-table">
-                <table id="invoice-table">
+            <div>
+                <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
+                <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Fecha Entrega</th>
+                            <th>Cliente</th>
+                            <th>RUC</th>
+                            <th>Provincia</th>
+                            <th>Ciudad</th>
+                            <th>Lista Precio</th>
+                            <th>Canal</th>
+                            <th>Sub Canal</th>
+                            <th>Vendedor</th>
+                            <th>Cuentas</th>
+                            <th>Código</th>
+                            <th>Modelo</th>
+                            <th>Proveedor</th>
+                            <th>Cantidad</th>
+                            <th>Costo Unitario</th>
+                            <th>Costo Total</th>
+                            <th>IVA Pagado</th>
+                            <th>Precio Unitario</th>
+                            <th>Precio Total</th>
+                            <th>IVA Cobrado</th>
+                            <th>Total Facturado</th>
+                            <th>Utilidad</th>
+                            <th>Crédito</th>
+                            <th>Condiciones Crédito</th>
+                            <th>Pendientes</th>
+                            <th>Perdido</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-table">
+                        <!-- Pre-formatted rows for pasting large information -->
+                        ${Array(100).fill().map(() => '<tr><td></td>' + Array(27).fill('<td contenteditable="true"></td>').join('') + '</tr>').join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="excel-like-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Factura</th>
@@ -131,59 +242,154 @@
                             <th>Perdido</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Rows will be dynamically added here -->
+                    <tbody id="csv-table">
+                        <!-- Rows for CSV data -->
                     </tbody>
                 </table>
             </div>
-            <button class="export-btn" onclick="exportToCSV()">Exportar a CSV</button>
         </section>
     </main>
+    <footer>
+        <p>Sistema de Facturación Inteligente - 2024</p>
+    </footer>
     <script>
-        function loadCSV() {
-            const fileInput = document.getElementById('file-upload');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Por favor, selecciona un archivo CSV.');
-                return;
+        const PASSWORD = "mcm352";
+        let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
+
+        document.getElementById("login-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const enteredPassword = document.getElementById("password").value.trim();
+            if (enteredPassword === PASSWORD) {
+                document.getElementById("login-section").style.display = "none";
+                document.querySelector("main").style.display = "block";
+                populateTable();
+                updateFacturaCount();
+            } else {
+                document.getElementById("login-error").style.display = "block";
             }
+        });
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const text = e.target.result;
-                const rows = text.split('\n');
-                const tableBody = document.getElementById('invoice-table').querySelector('tbody');
-                tableBody.innerHTML = '';
+        document.getElementById("upload-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const file = document.getElementById("file-upload").files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(this.result, "application/xml");
+                    const cdata = xml.querySelector("comprobante")?.textContent.trim();
 
-                rows.forEach(row => {
-                    const cells = row.split(',');
-                    const tr = document.createElement('tr');
-                    cells.forEach(cell => {
-                        const td = document.createElement('td');
-                        td.textContent = cell.trim();
-                        tr.appendChild(td);
-                    });
-                    tableBody.appendChild(tr);
-                });
-            };
-            reader.readAsText(file);
+                    if (cdata) {
+                        const cdataXML = new DOMParser().parseFromString(cdata, "application/xml");
+                        const invoice = processXMLData(cdataXML);
+                        invoices.push(...invoice);
+                        localStorage.setItem("invoices", JSON.stringify(invoices));
+                        populateTable();
+                        updateFacturaCount();
+                    } else {
+                        alert("No se encontró información válida en el archivo XML.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function processXMLData(xml) {
+            const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
+            const models = Array.from(xml.querySelectorAll("detalles > detalle"));
+            return models.map(model => ({
+                factura: getTagValue("infoTributaria > secuencial"),
+                fecha: getTagValue("infoFactura > fechaEmision"),
+                fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
+                cliente: getTagValue("infoFactura > razonSocialComprador"),
+                ruc: getTagValue("infoFactura > identificacionComprador"),
+                provincia: getTagValue("infoFactura > direccionComprador"),
+                ciudad: getTagValue("infoFactura > direccionComprador"),
+                lista_precio: getTagValue("infoFactura > listaPrecio"),
+                canal: getTagValue("infoFactura > canal"),
+                sub_canal: getTagValue("infoFactura > subCanal"),
+                vendedor: getTagValue("infoFactura > vendedor"),
+                cuentas: getTagValue("infoFactura > cuentas"),
+                codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+                modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+                proveedor: getTagValue("infoFactura > proveedor"),
+                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                total_facturado: getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                utilidad: getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                credito: getTagValue("infoFactura > credito"),
+                condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+                pendientes: getTagValue("infoFactura > pendientes"),
+                perdido: getTagValue("infoFactura > perdido")
+            }));
         }
 
-        function exportToCSV() {
-            const table = document.getElementById('invoice-table');
-            const rows = Array.from(table.rows);
-            const csvContent = rows.map(row => {
-                const cells = Array.from(row.cells);
-                return cells.map(cell => cell.textContent).join(',');
-            }).join('\n');
+        function populateTable() {
+            const tbody = document.getElementById("invoice-table");
+            tbody.innerHTML = "";
 
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'facturas.csv';
-            a.click();
-            URL.revokeObjectURL(url);
+            // Ordenar las facturas por fecha de más viejo a más nuevo
+            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+            invoices.forEach((invoice, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => `<td contenteditable="true">${value}</td>`).join("");
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Eliminar";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.addEventListener("click", () => {
+                    invoices.splice(index, 1);
+                    localStorage.setItem("invoices", JSON.stringify(invoices));
+                    populateTable();
+                    updateFacturaCount();
+                });
+                const deleteCell = document.createElement("td");
+                deleteCell.appendChild(deleteBtn);
+                row.appendChild(deleteCell);
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateFacturaCount() {
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            populateTable();
+            updateFacturaCount();
+        });
+
+        async function exportToExcel() {
+            const fileName = 'Copia de Cuentas 27 12 2024.xlsx';
+            let workbook;
+
+            try {
+                const data = await fetch(fileName).then(res => res.arrayBuffer());
+                workbook = XLSX.read(data, { type: 'array' });
+            } catch (e) {
+                workbook = XLSX.utils.book_new();
+            }
+
+            const worksheet = XLSX.utils.aoa_to_sheet([]);
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]
+            ], { origin: -1 });
+
+            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar las facturas por fecha de más viejo a más nuevo
+
+            invoices.forEach(invoice => {
+                XLSX.utils.sheet_add_aoa(worksheet, [
+                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_pagado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_cobrado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.total_facturado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.utilidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
+                ], { origin: -1 });
+            });
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturas');
+            XLSX.writeFile(workbook, fileName);
         }
     </script>
 </body>
