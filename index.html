@@ -268,19 +268,28 @@
             updateFacturaCount();
         });
 
-        function exportToExcel() {
-            let data = invoices.map(invoice => 
-                Object.fromEntries(
-                    Object.entries(invoice).map(([key, value]) => 
-                        [key, typeof value === 'string' ? value.trim() : value]
-                    )
-                )
-            );
+        async function exportToExcel() {
+            const existingWorkbook = await fetchExcelFile();
+            const ws = XLSX.utils.json_to_sheet(invoices, { origin: -1, skipHeader: true });
+            XLSX.utils.sheet_add_json(existingWorkbook.Sheets["Facturas Renova Energia"], invoices, { origin: -1, skipHeader: true });
+            XLSX.writeFile(existingWorkbook, "Facturas_Renova_Energia.xlsx");
+        }
+
+        async function fetchExcelFile() {
+            try {
+                const response = await fetch("Facturas_Renova_Energia.xlsx");
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    return XLSX.read(arrayBuffer, { type: "array" });
+                }
+            } catch (error) {
+                console.error("Error fetching Excel file:", error);
+            }
 
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(data);
+            const ws = XLSX.utils.json_to_sheet([]);
             XLSX.utils.book_append_sheet(wb, ws, "Facturas Renova Energia");
-            XLSX.writeFile(wb, "Facturas_Renova_Energia.xlsx");
+            return wb;
         }
     </script>
 </body>
