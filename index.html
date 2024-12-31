@@ -130,15 +130,6 @@
                     });
                 });
             });
-
-            const allInputs = document.querySelectorAll('input');
-            allInputs.forEach(input => {
-                if (!fieldsToValidate.includes(input.name)) {
-                    input.addEventListener('input', function () {
-                        // Permitir todos los caracteres en otros campos
-                    });
-                }
-            });
         });
     </script>
 </head>
@@ -274,7 +265,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${value.replace(/[^\d,.]/g, '').replace(/\./g, ',')}</td>`).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
