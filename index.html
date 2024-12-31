@@ -254,6 +254,25 @@
             populateTable();
             updateFacturaCount();
         });
+
+        // Integración con Excel (Python backend)
+        async function updateExcel() {
+            const response = await fetch("/update_excel", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ invoices }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("Datos actualizados en Excel.");
+            } else {
+                alert("Error al actualizar el Excel.");
+            }
+        }
+
+        document.getElementById("process-text").addEventListener("click", updateExcel);
     </script>
 </body>
 </html>
