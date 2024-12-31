@@ -97,11 +97,22 @@
         .scroll-bottom-btn {
             bottom: 80px;
         }
+        .excel-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
+        <button class="excel-btn" onclick="exportToExcel()">Pasar a Excel</button>
     </header>
     <main>
         <section>
@@ -110,8 +121,6 @@
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
-            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
-            <button id="process-text">Procesar Texto</button>
             <div>
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
@@ -258,6 +267,25 @@
             populateTable();
             updateFacturaCount();
         });
+
+        function exportToExcel() {
+            const table = document.querySelector("table");
+            const rows = Array.from(table.querySelectorAll("tr"));
+            const csvContent = rows.map(row => {
+                const cells = Array.from(row.querySelectorAll("th, td"));
+                return cells.map(cell => `"${cell.textContent}"`).join(",");
+            }).join("\n");
+
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = "facturas.csv";
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>
