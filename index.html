@@ -244,7 +244,7 @@
                 const row = document.createElement("tr");
                 row.innerHTML = Object.values(invoice).map(value => {
                     if (/^\s*\d+[.,\d]*$/.test(value)) {
-                        return `<td>${value.replace(/\s+/g, '')}</td>`;
+                        return `<td>${value.replace(/\s+/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>`;
                     }
                     return `<td>${value}</td>`;
                 }).join("");
