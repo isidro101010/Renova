@@ -5,94 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Facturación Inteligente</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-        header {
-            background-color: #005f99;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-        h1 {
-            margin: 0;
-        }
-        main {
-            padding: 20px;
-            display: none;
-        }
-        form {
-            margin: 20px 0;
-        }
-        textarea, input, button {
-            margin: 5px 0;
-            padding: 10px;
-            width: 100%;
-            max-width: 400px;
-        }
-        button {
-            background-color: #ff6600;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #cc5200;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 12px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 5px;
-            text-align: center;
-        }
-        th {
-            background-color: #005f99;
-            color: white;
-        }
-        tbody tr:nth-child(odd) {
-            background-color: #f9f9f9;
-        }
-        tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-        .delete-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-        }
-        .factura-count {
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        .excel-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-        }
+        /* tus estilos aquí */
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
         <button class="excel-btn" onclick="exportToExcel()">EXCEL</button>
     </header>
+    <!-- tu contenido aquí -->
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
         <form id="login-form">
@@ -267,23 +189,16 @@
         });
 
         function exportToExcel() {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            const headers = ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"];
-            
-            csvContent += headers.join(",") + "\r\n";
+            // Crea una nueva hoja de trabajo
+            var ws_data = invoices.map(invoice => Object.values(invoice));
+            var ws = XLSX.utils.aoa_to_sheet([["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]].concat(ws_data));
 
-            invoices.forEach(invoice => {
-                const row = Object.values(invoice).map(value => (value || "").toString().replace(".", ",").trim());
-                csvContent += row.join(",") + "\r\n";
-            });
+            // Crea un nuevo libro de trabajo y agrega la hoja de trabajo
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Hoja1");
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "FACTURAS_RENOVA_ENERGIA.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Genera el archivo Excel y descárgalo
+            XLSX.writeFile(wb, 'FACTURAS_RENOVA_ENERGIA.xlsx');
         }
     </script>
 </body>
