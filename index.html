@@ -275,7 +275,7 @@
                 return Array.from(row.querySelectorAll("th, td")).map(cell => {
                     let value = cell.textContent.trim();
                     if (/^\s*\d+[.,\d]*$/.test(value)) {
-                        value = value.replace(/^\s+|\s+$/g, '').replace(/\./g, '').replace(/,/g, '.'); // Quitar espacios y ajustar separadores
+                        value = value.replace(/[^\d,]/g, ''); // Remove everything except numbers and commas
                     }
                     return value;
                 });
