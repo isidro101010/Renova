@@ -203,6 +203,7 @@
 
         function processXMLData(xml) {
             const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
+            const formatNumber = (num) => parseFloat(num.replace(/^\s+|\s+$/g, '').replace('.', ','));
             const models = Array.from(xml.querySelectorAll("detalles > detalle"));
             return models.map(model => ({
                 factura: getTagValue("infoTributaria > secuencial"),
@@ -220,19 +221,19 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: parseFloat(model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '') || "0"),
-                costo_unitario: parseFloat(model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '') || "0"),
-                costo_total: parseFloat(model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '') || "0"),
-                iva_pagado: parseFloat(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '') || "0"),
-                precio_unitario: parseFloat(model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '') || "0"),
-                precio_total: parseFloat(model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '') || "0"),
-                iva_cobrado: parseFloat(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '') || "0"),
-                total_facturado: parseFloat(getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '') || "0"),
-                utilidad: parseFloat(getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '') || "0"),
-                credito: parseFloat(getTagValue("infoFactura > credito") || "0"),
+                cantidad: formatNumber(model.querySelector("cantidad")?.textContent || "0"),
+                costo_unitario: formatNumber(model.querySelector("precioUnitario")?.textContent || "0"),
+                costo_total: formatNumber(model.querySelector("precioTotalSinImpuesto")?.textContent || "0"),
+                iva_pagado: formatNumber(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor") || "0"),
+                precio_unitario: formatNumber(model.querySelector("precioUnitario")?.textContent || "0"),
+                precio_total: formatNumber(model.querySelector("precioTotalSinImpuesto")?.textContent || "0"),
+                iva_cobrado: formatNumber(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor") || "0"),
+                total_facturado: formatNumber(getTagValue("infoFactura > importeTotal") || "0"),
+                utilidad: formatNumber(getTagValue("infoFactura > utilidad") || "0"),
+                credito: formatNumber(getTagValue("infoFactura > credito") || "0"),
                 condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
-                pendientes: parseFloat(getTagValue("infoFactura > pendientes") || "0"),
-                perdido: parseFloat(getTagValue("infoFactura > perdido") || "0")
+                pendientes: formatNumber(getTagValue("infoFactura > pendientes") || "0"),
+                perdido: formatNumber(getTagValue("infoFactura > perdido") || "0")
             }));
         }
 
