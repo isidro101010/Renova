@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -167,7 +167,7 @@
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
-            <div class="table-wrapper">
+            <div class="table-wrapper excel-like-table">
                 <table>
                     <thead>
                         <tr>
@@ -204,46 +204,7 @@
                     </thead>
                     <tbody id="invoice-table">
                         <!-- Pre-formatted rows for pasting large information -->
-                        ${Array(100).fill().map(() => '<tr><td></td>' + Array(27).fill('<td contenteditable="true"></td>').join('') + '</tr>').join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="excel-like-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Factura</th>
-                            <th>Fecha</th>
-                            <th>Fecha Entrega</th>
-                            <th>Cliente</th>
-                            <th>RUC</th>
-                            <th>Provincia</th>
-                            <th>Ciudad</th>
-                            <th>Lista Precio</th>
-                            <th>Canal</th>
-                            <th>Sub Canal</th>
-                            <th>Vendedor</th>
-                            <th>Cuentas</th>
-                            <th>Código</th>
-                            <th>Modelo</th>
-                            <th>Proveedor</th>
-                            <th>Cantidad</th>
-                            <th>Costo Unitario</th>
-                            <th>Costo Total</th>
-                            <th>IVA Pagado</th>
-                            <th>Precio Unitario</th>
-                            <th>Precio Total</th>
-                            <th>IVA Cobrado</th>
-                            <th>Total Facturado</th>
-                            <th>Utilidad</th>
-                            <th>Crédito</th>
-                            <th>Condiciones Crédito</th>
-                            <th>Pendientes</th>
-                            <th>Perdido</th>
-                        </tr>
-                    </thead>
-                    <tbody id="csv-table">
-                        <!-- Rows for CSV data -->
+                        ${Array(100).fill(<tr><td></td>${Array(27).fill('<td contenteditable="true"></td>').join('')}</tr>).join('')}
                     </tbody>
                 </table>
             </div>
@@ -338,7 +299,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => `<td contenteditable="true">${value}</td>`).join("");
+                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => <td contenteditable="true">${value}</td>).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -356,7 +317,7 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
+            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
         }
 
         document.addEventListener("DOMContentLoaded", () => {
