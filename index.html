@@ -168,7 +168,7 @@
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
             <div class="table-wrapper excel-like-table">
-                <table contenteditable="true">
+                <table>
                     <thead>
                         <tr>
                             <th>Factura</th>
@@ -204,7 +204,7 @@
                     </thead>
                     <tbody id="invoice-table">
                         <!-- Pre-formatted rows for pasting large information -->
-                        ${Array(100).fill(`<tr>${Array(28).fill('<td contenteditable="true"></td>').join('')}</tr>`).join('')}
+                        ${Array(100).fill(`<tr><td></td>${Array(27).fill('<td contenteditable="true"></td>').join('')}</tr>`).join('')}
                     </tbody>
                 </table>
             </div>
@@ -299,7 +299,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
+                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => `<td contenteditable="true">${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
