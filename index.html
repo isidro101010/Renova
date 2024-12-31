@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -203,7 +203,6 @@
                         </tr>
                     </thead>
                     <tbody id="invoice-table">
-                        <!-- Pre-formatted rows for pasting large information -->
                         ${Array(100).fill(<tr><td></td>${Array(27).fill('<td contenteditable="true"></td>').join('')}</tr>).join('')}
                     </tbody>
                 </table>
@@ -214,7 +213,7 @@
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
     <script>
-        const PASSWORD = "mcm352";
+        const PASSWORD = "MCM352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
 
         document.getElementById("login-form").addEventListener("submit", (e) => {
@@ -299,7 +298,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => <td contenteditable="true">${value}</td>).join("");
+                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => `<td contenteditable="true">${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -317,7 +316,7 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -345,7 +344,7 @@
 
             invoices.forEach(invoice => {
                 XLSX.utils.sheet_add_aoa(worksheet, [
-                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_pagado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_cobrado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.total_facturado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.utilidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
+                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad, invoice.costo_unitario, invoice.costo_total, invoice.iva_pagado, invoice.precio_unitario, invoice.precio_total, invoice.iva_cobrado, invoice.total_facturado, invoice.utilidad, invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
                 ], { origin: -1 });
             });
 
@@ -354,4 +353,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
