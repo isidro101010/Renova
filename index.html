@@ -167,7 +167,7 @@
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
-            <div class="table-wrapper">
+            <div class="table-wrapper excel-like-table">
                 <table>
                     <thead>
                         <tr>
@@ -204,49 +204,35 @@
                     </thead>
                     <tbody id="invoice-table">
                         <!-- Pre-formatted rows for pasting large information -->
-                        ${Array(100).fill().map(() => '<tr><td></td>' + Array(27).fill('<td contenteditable="true"></td>').join('') + '</tr>').join('')}
+                        ${Array(100).fill('<tr><td></td>' + Array(27).fill('<td contenteditable="true"></td>').join('') + '</tr>').join('')}
                     </tbody>
                 </table>
             </div>
-            <div class="excel-like-table">
-                <table>
+        </section>
+        <section>
+            <h2>Tabla Estilo Excel</h2>
+            <div class="table-wrapper">
+                <table id="excel-table">
                     <thead>
                         <tr>
                             <th>Factura</th>
                             <th>Fecha</th>
-                            <th>Fecha Entrega</th>
                             <th>Cliente</th>
                             <th>RUC</th>
                             <th>Provincia</th>
                             <th>Ciudad</th>
-                            <th>Lista Precio</th>
-                            <th>Canal</th>
-                            <th>Sub Canal</th>
-                            <th>Vendedor</th>
-                            <th>Cuentas</th>
-                            <th>Código</th>
-                            <th>Modelo</th>
-                            <th>Proveedor</th>
+                            <th>Producto</th>
                             <th>Cantidad</th>
-                            <th>Costo Unitario</th>
-                            <th>Costo Total</th>
-                            <th>IVA Pagado</th>
                             <th>Precio Unitario</th>
-                            <th>Precio Total</th>
-                            <th>IVA Cobrado</th>
-                            <th>Total Facturado</th>
-                            <th>Utilidad</th>
-                            <th>Crédito</th>
-                            <th>Condiciones Crédito</th>
-                            <th>Pendientes</th>
-                            <th>Perdido</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
-                    <tbody id="csv-table">
-                        <!-- Rows for CSV data -->
+                    <tbody>
+                        <!-- Rows dynamically added here -->
                     </tbody>
                 </table>
             </div>
+            <button onclick="exportToCSV()">Exportar a CSV</button>
         </section>
     </main>
     <footer>
@@ -313,12 +299,12 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ','),
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ','),
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ','),
                 iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
-                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ','),
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ','),
                 iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
                 total_facturado: getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '').replace('.', ','),
                 utilidad: getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '').replace('.', ','),
@@ -364,32 +350,21 @@
             updateFacturaCount();
         });
 
-        async function exportToExcel() {
-            const fileName = 'Copia de Cuentas 27 12 2024.xlsx';
-            let workbook;
+        async function exportToCSV() {
+            const table = document.getElementById("excel-table");
+            const rows = Array.from(table.rows);
+            const csvContent = rows.map(row => {
+                const cells = Array.from(row.cells);
+                return cells.map(cell => cell.innerText).join(",");
+            }).join("\n");
 
-            try {
-                const data = await fetch(fileName).then(res => res.arrayBuffer());
-                workbook = XLSX.read(data, { type: 'array' });
-            } catch (e) {
-                workbook = XLSX.utils.book_new();
-            }
-
-            const worksheet = XLSX.utils.aoa_to_sheet([]);
-            XLSX.utils.sheet_add_aoa(worksheet, [
-                ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]
-            ], { origin: -1 });
-
-            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar las facturas por fecha de más viejo a más nuevo
-
-            invoices.forEach(invoice => {
-                XLSX.utils.sheet_add_aoa(worksheet, [
-                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_pagado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_cobrado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.total_facturado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.utilidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
-                ], { origin: -1 });
-            });
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturas');
-            XLSX.writeFile(workbook, fileName);
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "facturas.csv";
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
