@@ -269,8 +269,13 @@
         });
 
         function exportToExcel() {
+            let data = invoices.map((invoice, index) => {
+                if (index === 0) return null; // Skip the first row (headers)
+                return Object.fromEntries(Object.entries(invoice).map(([key, value]) => [key, typeof value === 'string' ? value.trim().replace(/^\s+|\s+$/g, '') : value]));
+            }).filter(row => row !== null);
+
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(invoices);
+            const ws = XLSX.utils.json_to_sheet(data);
             XLSX.utils.book_append_sheet(wb, ws, "Facturas Renova Energia");
             XLSX.writeFile(wb, "Facturas_Renova_Energia.xlsx");
         }
