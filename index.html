@@ -242,7 +242,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${value.replace(/\./g, ',').replace(/\s+/g, '')}</td>`).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value.replace(/[^\d,]/g, '').replace(/\./g, ',')}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -275,7 +275,7 @@
                 return Array.from(row.querySelectorAll("th, td")).map(cell => {
                     let value = cell.textContent.trim();
                     if (/^\s*\d+[.,\d]*$/.test(value)) {
-                        value = value.replace(/[^\d,]/g, '').replace(/\./g, ',').replace(/\s+/g, ''); // Remove everything except numbers and commas, replace dots with commas, remove spaces
+                        value = value.replace(/[^\d,]/g, '').replace(/\./g, ',');
                     }
                     return value;
                 });
