@@ -108,6 +108,7 @@
             cursor: pointer;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
@@ -173,71 +174,34 @@
     <script>
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
 
-        document.getElementById("upload-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const file = document.getElementById("file-upload").files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function () {
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(this.result, "application/xml");
-                    const cdata = xml.querySelector("comprobante")?.textContent.trim();
-
-                    if (cdata) {
-                        const cdataXML = new DOMParser().parseFromString(cdata, "application/xml");
-                        const invoice = processXMLData(cdataXML);
-                        invoices.push(...invoice);
-                        localStorage.setItem("invoices", JSON.stringify(invoices));
-                        populateTable();
-                        updateFacturaCount();
-                    } else {
-                        alert("No se encontró información válida en el archivo XML.");
+        function exportToExcel() {
+            const table = document.querySelector("table");
+            const rows = Array.from(table.querySelectorAll("tr"));
+            const data = rows.map(row => {
+                return Array.from(row.querySelectorAll("th, td")).map(cell => {
+                    let value = cell.textContent.trim();
+                    if (!isNaN(value)) {
+                        value = value.replace(/\./g, '').replace(/,/g, '.'); // Reemplazar puntos con comas y viceversa
                     }
-                };
-                reader.readAsText(file);
-            }
-        });
+                    return value;
+                });
+            });
 
-        function processXMLData(xml) {
-            const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
-            const models = Array.from(xml.querySelectorAll("detalles > detalle"));
-            return models.map(model => ({
-                factura: getTagValue("infoTributaria > secuencial"),
-                fecha: getTagValue("infoFactura > fechaEmision"),
-                fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
-                cliente: getTagValue("infoFactura > razonSocialComprador"),
-                ruc: getTagValue("infoFactura > identificacionComprador"),
-                provincia: getTagValue("infoFactura > direccionComprador"),
-                ciudad: getTagValue("infoFactura > direccionComprador"),
-                lista_precio: getTagValue("infoFactura > listaPrecio"),
-                canal: getTagValue("infoFactura > canal"),
-                sub_canal: getTagValue("infoFactura > subCanal"),
-                vendedor: getTagValue("infoFactura > vendedor"),
-                cuentas: getTagValue("infoFactura > cuentas"),
-                codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
-                modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
-                proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
-                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                total_facturado: getTagValue("infoFactura > importeTotal"),
-                utilidad: getTagValue("infoFactura > utilidad"),
-                credito: getTagValue("infoFactura > credito"),
-                condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
-                pendientes: getTagValue("infoFactura > pendientes"),
-                perdido: getTagValue("infoFactura > perdido")
-            }));
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas");
+            XLSX.writeFile(workbook, "facturas.xlsx");
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            populateTable();
+            updateFacturaCount();
+        });
 
         function populateTable() {
             const tbody = document.getElementById("invoice-table");
             tbody.innerHTML = "";
 
-            // Ordenar las facturas por fecha de más nuevo a más viejo
             invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
             invoices.forEach((invoice, index) => {
@@ -262,30 +226,7 @@
         function updateFacturaCount() {
             document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
         }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            populateTable();
-            updateFacturaCount();
-        });
-
-        function exportToExcel() {
-            const table = document.querySelector("table");
-            const rows = Array.from(table.querySelectorAll("tr"));
-            const csvContent = rows.map(row => {
-                const cells = Array.from(row.querySelectorAll("th, td"));
-                return cells.map(cell => `"${cell.textContent}"`).join(",");
-            }).join("\n");
-
-            const blob = new Blob([csvContent], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.style.display = "none";
-            a.href = url;
-            a.download = "facturas.csv";
-            document.body.appendChild(a);
-            a.click();
-            URL.revokeObjectURL(url);
-        }
     </script>
 </body>
 </html>
+
