@@ -5,7 +5,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Facturación Inteligente</title>
     <style>
-        /* existing styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        header {
+            background-color: #005f99;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            margin: 0;
+        }
+        main {
+            padding: 20px;
+            display: block;
+        }
+        form {
+            margin: 20px 0;
+        }
+        textarea, input, button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        button {
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #cc5200;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #005f99;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .factura-count {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .scroll-top-btn, .scroll-bottom-btn {
+            position: fixed;
+            right: 20px;
+            z-index: 3;
+            background-color: #005f99;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .scroll-top-btn {
+            top: 80px;
+        }
+        .scroll-bottom-btn {
+            bottom: 80px;
+        }
+        .excel-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -25,7 +126,7 @@
                 const inputs = document.querySelectorAll(`input[name="${field}"]`);
                 inputs.forEach(input => {
                     input.addEventListener('input', function () {
-                        this.value = this.value.replace(/[^0-9,.]/g, '');
+                        this.value = this.value.replace(/[^0-9.,]/g, '');
                     });
                 });
             });
