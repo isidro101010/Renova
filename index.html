@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Facturación Inteligente</title>
     <style>
+        /* Tu estilo original */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -87,6 +88,7 @@
             cursor: pointer;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
@@ -240,7 +242,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => <td>${value}</td>).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -258,7 +260,7 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -267,23 +269,10 @@
         });
 
         function exportToExcel() {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            const headers = ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"];
-            
-            csvContent += headers.join(",") + "\r\n";
-
-            invoices.forEach(invoice => {
-                const row = Object.values(invoice).map(value => (value || "").toString().replace(".", ",").trim());
-                csvContent += row.join(",") + "\r\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "FACTURAS_RENOVA_ENERGIA.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(invoices);
+            XLSX.utils.book_append_sheet(wb, ws, "Facturas Renova Energia");
+            XLSX.writeFile(wb, "Facturas_Renova_Energia.xlsx");
         }
     </script>
 </body>
