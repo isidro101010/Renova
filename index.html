@@ -203,7 +203,10 @@
 
         function processXMLData(xml) {
             const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
-            const formatNumber = (num) => parseFloat(num.replace(/^\s+|\s+$/g, '').replace('.', ','));
+            const formatNumber = (num) => {
+                const parsed = parseFloat(num.replace(/^\s+|\s+$/g, '').replace('.', ','));
+                return isNaN(parsed) ? 0 : parsed;
+            };
             const models = Array.from(xml.querySelectorAll("detalles > detalle"));
             return models.map(model => ({
                 factura: getTagValue("infoTributaria > secuencial"),
@@ -243,7 +246,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${isNaN(value) ? 0 : value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
