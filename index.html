@@ -274,8 +274,8 @@
             const data = rows.map(row => {
                 return Array.from(row.querySelectorAll("th, td")).map(cell => {
                     let value = cell.textContent.trim();
-                    if (!isNaN(value)) {
-                        value = value.replace(/\./g, '').replace(/,/g, '.'); // Reemplazar puntos con comas y viceversa
+                    if (/^\s*\d+[.,\d]*$/.test(value)) {
+                        value = value.replace(/^\s+|\s+$/g, '').replace(/\./g, '').replace(/,/g, '.'); // Quitar espacios y ajustar separadores
                     }
                     return value;
                 });
