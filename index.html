@@ -76,11 +76,22 @@
             font-weight: bold;
             margin: 10px 0;
         }
+        .excel-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Sistema de Facturación Inteligente</h1>
+        <button class="excel-btn" onclick="exportToExcel()">EXCEL</button>
     </header>
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
@@ -207,15 +218,15 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
-                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
-                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
-                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
-                total_facturado: getTagValue("infoFactura > importeTotal"),
-                utilidad: getTagValue("infoFactura > utilidad"),
+                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                total_facturado: getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                utilidad: getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '').replace('.', ','),
                 credito: getTagValue("infoFactura > credito"),
                 condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
                 pendientes: getTagValue("infoFactura > pendientes"),
@@ -255,24 +266,25 @@
             updateFacturaCount();
         });
 
-        // Integración con Excel (Python backend)
-        async function updateExcel() {
-            const response = await fetch("/update_excel", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ invoices }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                alert("Datos actualizados en Excel.");
-            } else {
-                alert("Error al actualizar el Excel.");
-            }
-        }
+        function exportToExcel() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            const headers = ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"];
+            
+            csvContent += headers.join(",") + "\r\n";
 
-        document.getElementById("process-text").addEventListener("click", updateExcel);
+            invoices.forEach(invoice => {
+                const row = Object.values(invoice).map(value => (value || "").toString().replace(".", ",").trim());
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "FACTURAS_RENOVA_ENERGIA.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
