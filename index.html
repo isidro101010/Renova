@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,6 @@
             margin: 0;
             padding: 0;
             color: #333;
-            overflow: hidden; /* Remove scroll bars */
         }
         header {
             background-color: #005f99;
@@ -30,7 +29,7 @@
         form {
             margin: 20px 0;
         }
-        input, button {
+        textarea, input, button {
             margin: 5px 0;
             padding: 10px;
             width: 100%;
@@ -44,9 +43,6 @@
         }
         button:hover {
             background-color: #cc5200;
-        }
-        .table-wrapper {
-            overflow-x: auto;
         }
         table {
             width: 100%;
@@ -101,45 +97,7 @@
         .scroll-bottom-btn {
             bottom: 80px;
         }
-        .export-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .export-btn:hover {
-            background-color: #218838;
-        }
-        .excel-like-table {
-            width: 100%;
-            height: 500px;
-            overflow: auto;
-        }
-        .excel-like-table table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-        .excel-like-table th, .excel-like-table td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .excel-like-table th {
-            background-color: #f4f4f4;
-            position: sticky;
-            top: 0;
-        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
@@ -154,65 +112,63 @@
         <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
     </div>
     <main>
-        <header>
-            <button class="export-btn" onclick="exportToExcel()">Exportar a Excel</button>
-        </header>
         <section>
             <h2>Cargar Facturas</h2>
             <form id="upload-form">
                 <input type="file" id="file-upload" accept=".xml">
                 <button type="submit">Subir Factura XML</button>
             </form>
+            <textarea id="text-input" rows="10" placeholder="Pega aquí las facturas en texto"></textarea>
+            <button id="process-text">Procesar Texto</button>
             <div>
                 <input type="text" id="search-bar" placeholder="Buscar por cliente, factura, etc.">
                 <span class="factura-count" id="factura-count">Facturas leídas: 0</span>
             </div>
-            <div class="table-wrapper excel-like-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Factura</th>
-                            <th>Fecha</th>
-                            <th>Fecha Entrega</th>
-                            <th>Cliente</th>
-                            <th>RUC</th>
-                            <th>Provincia</th>
-                            <th>Ciudad</th>
-                            <th>Lista Precio</th>
-                            <th>Canal</th>
-                            <th>Sub Canal</th>
-                            <th>Vendedor</th>
-                            <th>Cuentas</th>
-                            <th>Código</th>
-                            <th>Modelo</th>
-                            <th>Proveedor</th>
-                            <th>Cantidad</th>
-                            <th>Costo Unitario</th>
-                            <th>Costo Total</th>
-                            <th>IVA Pagado</th>
-                            <th>Precio Unitario</th>
-                            <th>Precio Total</th>
-                            <th>IVA Cobrado</th>
-                            <th>Total Facturado</th>
-                            <th>Utilidad</th>
-                            <th>Crédito</th>
-                            <th>Condiciones Crédito</th>
-                            <th>Pendientes</th>
-                            <th>Perdido</th>
-                            <th>Eliminar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="invoice-table">
-                        <!-- Pre-formatted rows for pasting large information -->
-                        ${Array(100).fill(<tr><td></td>${Array(27).fill('<td contenteditable="true"></td>').join('')}</tr>).join('')}
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factura</th>
+                        <th>Fecha</th>
+                        <th>Fecha Entrega</th>
+                        <th>Cliente</th>
+                        <th>RUC</th>
+                        <th>Provincia</th>
+                        <th>Ciudad</th>
+                        <th>Lista Precio</th>
+                        <th>Canal</th>
+                        <th>Sub Canal</th>
+                        <th>Vendedor</th>
+                        <th>Cuentas</th>
+                        <th>Código</th>
+                        <th>Modelo</th>
+                        <th>Proveedor</th>
+                        <th>Cantidad</th>
+                        <th>Costo Unitario</th>
+                        <th>Costo Total</th>
+                        <th>IVA Pagado</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Total</th>
+                        <th>IVA Cobrado</th>
+                        <th>Total Facturado</th>
+                        <th>Utilidad</th>
+                        <th>Crédito</th>
+                        <th>Condiciones Crédito</th>
+                        <th>Pendientes</th>
+                        <th>Perdido</th>
+                        <th>Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-table">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
         </section>
     </main>
     <footer>
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
+    <button class="scroll-top-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">↑</button>
+    <button class="scroll-bottom-btn" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });">↓</button>
     <script>
         const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
@@ -274,15 +230,15 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
-                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
-                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
-                total_facturado: getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '').replace('.', ','),
-                utilidad: getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                cantidad: model.querySelector("cantidad")?.textContent.trim() || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim() || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim() || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor"),
+                total_facturado: getTagValue("infoFactura > importeTotal"),
+                utilidad: getTagValue("infoFactura > utilidad"),
                 credito: getTagValue("infoFactura > credito"),
                 condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
                 pendientes: getTagValue("infoFactura > pendientes"),
@@ -294,12 +250,12 @@
             const tbody = document.getElementById("invoice-table");
             tbody.innerHTML = "";
 
-            // Ordenar las facturas por fecha de más viejo a más nuevo
-            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+            // Ordenar las facturas por fecha de más nuevo a más viejo
+            invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = '<td></td>' + Object.values(invoice).map(value => <td contenteditable="true">${value}</td>).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -317,41 +273,13 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             populateTable();
             updateFacturaCount();
         });
-
-        async function exportToExcel() {
-            const fileName = 'Copia de Cuentas 27 12 2024.xlsx';
-            let workbook;
-
-            try {
-                const data = await fetch(fileName).then(res => res.arrayBuffer());
-                workbook = XLSX.read(data, { type: 'array' });
-            } catch (e) {
-                workbook = XLSX.utils.book_new();
-            }
-
-            const worksheet = XLSX.utils.aoa_to_sheet([]);
-            XLSX.utils.sheet_add_aoa(worksheet, [
-                ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"]
-            ], { origin: -1 });
-
-            invoices.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenar las facturas por fecha de más viejo a más nuevo
-
-            invoices.forEach(invoice => {
-                XLSX.utils.sheet_add_aoa(worksheet, [
-                    [invoice.factura, invoice.fecha, invoice.fecha_entrega, invoice.cliente, invoice.ruc, invoice.provincia, invoice.ciudad, invoice.lista_precio, invoice.canal, invoice.sub_canal, invoice.vendedor, invoice.cuentas, invoice.codigo, invoice.modelo, invoice.proveedor, invoice.cantidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.costo_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_pagado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_unitario.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.precio_total.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.iva_cobrado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.total_facturado.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.utilidad.replace(/^\s+|\s+$/g, '').replace('.', ','), invoice.credito, invoice.condiciones_credito, invoice.pendientes, invoice.perdido]
-                ], { origin: -1 });
-            });
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturas');
-            XLSX.writeFile(workbook, fileName);
-        }
     </script>
 </body>
-</html> 
+</html>
