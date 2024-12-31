@@ -85,10 +85,8 @@
     <div id="login-section">
         <h2>Acceso al Sistema</h2>
         <form id="login-form">
-            <input type="password" id="password" placeholder="Contraseña" required>
             <button type="submit">Ingresar</button>
         </form>
-        <p id="login-error" style="color: red; display: none;">Contraseña incorrecta</p>
     </div>
     <main>
         <section>
@@ -147,20 +145,14 @@
         <p>Sistema de Facturación Inteligente - 2024</p>
     </footer>
     <script>
-        const PASSWORD = "mcm352";
         let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
 
         document.getElementById("login-form").addEventListener("submit", (e) => {
             e.preventDefault();
-            const enteredPassword = document.getElementById("password").value.trim();
-            if (enteredPassword === PASSWORD) {
-                document.getElementById("login-section").style.display = "none";
-                document.querySelector("main").style.display = "block";
-                populateTable();
-                updateFacturaCount();
-            } else {
-                document.getElementById("login-error").style.display = "block";
-            }
+            document.getElementById("login-section").style.display = "none";
+            document.querySelector("main").style.display = "block";
+            populateTable();
+            updateFacturaCount();
         });
 
         document.getElementById("upload-form").addEventListener("submit", (e) => {
@@ -229,7 +221,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => <td>${value}</td>).join("");
+                row.innerHTML = Object.values(invoice).map(value => `<td>${value}</td>`).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -247,7 +239,7 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
+            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
         }
 
         document.addEventListener("DOMContentLoaded", () => {
