@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Facturación Inteligente</title>
     <style>
-        /* Tu estilo original */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -88,7 +87,6 @@
             cursor: pointer;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
@@ -203,10 +201,6 @@
 
         function processXMLData(xml) {
             const getTagValue = (path) => xml.querySelector(path)?.textContent.trim() || "No encontrado";
-            const formatNumber = (num) => {
-                const parsed = parseFloat(num.replace(/^\s+|\s+$/g, '').replace('.', ','));
-                return isNaN(parsed) ? 0 : parsed;
-            };
             const models = Array.from(xml.querySelectorAll("detalles > detalle"));
             return models.map(model => ({
                 factura: getTagValue("infoTributaria > secuencial"),
@@ -224,19 +218,19 @@
                 codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
                 modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
                 proveedor: getTagValue("infoFactura > proveedor"),
-                cantidad: formatNumber(model.querySelector("cantidad")?.textContent || "0"),
-                costo_unitario: formatNumber(model.querySelector("precioUnitario")?.textContent || "0"),
-                costo_total: formatNumber(model.querySelector("precioTotalSinImpuesto")?.textContent || "0"),
-                iva_pagado: formatNumber(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor") || "0"),
-                precio_unitario: formatNumber(model.querySelector("precioUnitario")?.textContent || "0"),
-                precio_total: formatNumber(model.querySelector("precioTotalSinImpuesto")?.textContent || "0"),
-                iva_cobrado: formatNumber(getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor") || "0"),
-                total_facturado: formatNumber(getTagValue("infoFactura > importeTotal") || "0"),
-                utilidad: formatNumber(getTagValue("infoFactura > utilidad") || "0"),
-                credito: formatNumber(getTagValue("infoFactura > credito") || "0"),
+                cantidad: model.querySelector("cantidad")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                costo_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_pagado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                precio_unitario: model.querySelector("precioUnitario")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                precio_total: model.querySelector("precioTotalSinImpuesto")?.textContent.trim().replace(/^\s+|\s+$/g, '').replace('.', ',') || "No encontrado",
+                iva_cobrado: getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                total_facturado: getTagValue("infoFactura > importeTotal").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                utilidad: getTagValue("infoFactura > utilidad").replace(/^\s+|\s+$/g, '').replace('.', ','),
+                credito: getTagValue("infoFactura > credito"),
                 condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
-                pendientes: formatNumber(getTagValue("infoFactura > pendientes") || "0"),
-                perdido: formatNumber(getTagValue("infoFactura > perdido") || "0")
+                pendientes: getTagValue("infoFactura > pendientes"),
+                perdido: getTagValue("infoFactura > perdido")
             }));
         }
 
@@ -246,7 +240,7 @@
 
             invoices.forEach((invoice, index) => {
                 const row = document.createElement("tr");
-                row.innerHTML = Object.values(invoice).map(value => `<td>${isNaN(value) ? 0 : value}</td>`).join("");
+                row.innerHTML = Object.values(invoice).map(value => <td>${value}</td>).join("");
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "Eliminar";
                 deleteBtn.classList.add("delete-btn");
@@ -264,7 +258,7 @@
         }
 
         function updateFacturaCount() {
-            document.getElementById("factura-count").textContent = `Facturas leídas: ${invoices.length}`;
+            document.getElementById("factura-count").textContent = Facturas leídas: ${invoices.length};
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -272,28 +266,24 @@
             updateFacturaCount();
         });
 
-        async function exportToExcel() {
-            const existingWorkbook = await fetchExcelFile();
-            const ws = XLSX.utils.json_to_sheet(invoices, { origin: -1, skipHeader: true });
-            XLSX.utils.sheet_add_json(existingWorkbook.Sheets["Facturas Renova Energia"], invoices, { origin: -1, skipHeader: true });
-            XLSX.writeFile(existingWorkbook, "Facturas_Renova_Energia.xlsx");
-        }
+        function exportToExcel() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            const headers = ["Factura", "Fecha", "Fecha Entrega", "Cliente", "RUC", "Provincia", "Ciudad", "Lista Precio", "Canal", "Sub Canal", "Vendedor", "Cuentas", "Código", "Modelo", "Proveedor", "Cantidad", "Costo Unitario", "Costo Total", "IVA Pagado", "Precio Unitario", "Precio Total", "IVA Cobrado", "Total Facturado", "Utilidad", "Crédito", "Condiciones Crédito", "Pendientes", "Perdido"];
+            
+            csvContent += headers.join(",") + "\r\n";
 
-        async function fetchExcelFile() {
-            try {
-                const response = await fetch("Facturas_Renova_Energia.xlsx");
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    return XLSX.read(arrayBuffer, { type: "array" });
-                }
-            } catch (error) {
-                console.error("Error fetching Excel file:", error);
-            }
+            invoices.forEach(invoice => {
+                const row = Object.values(invoice).map(value => (value || "").toString().replace(".", ",").trim());
+                csvContent += row.join(",") + "\r\n";
+            });
 
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet([]);
-            XLSX.utils.book_append_sheet(wb, ws, "Facturas Renova Energia");
-            return wb;
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "FACTURAS_RENOVA_ENERGIA.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
