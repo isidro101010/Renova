@@ -335,13 +335,15 @@ function convertirNumero(valor){
 
     if(!valor){
 
-        return "0,00";
+        return "N/A";
 
     }
 
-    return valor
+    const limpio = valor
         .replace(/[^\d.,-]/g, '')
         .replace(/\./g, ',');
+
+    return limpio || "N/A";
 
 }
 
@@ -443,7 +445,7 @@ function processXMLData(xml) {
 
     const getTagValue = (path) =>
 
-        xml.querySelector(path)?.textContent.trim() || "0,00";
+        xml.querySelector(path)?.textContent.trim() || "N/A";
 
     const models = Array.from(xml.querySelectorAll("detalles > detalle"));
 
@@ -458,14 +460,17 @@ function processXMLData(xml) {
 
         const totalFacturado =
         parseFloat(
-            (getTagValue("infoFactura > importeTotal"))
+            (getTagValue("infoFactura > importeTotal")
             .replace(",", ".")
+            .replace("N/A", "0"))
         );
 
         const utilidadCalculada =
-        (totalFacturado - costoTotal)
-        .toFixed(2)
-        .replace(".", ",");
+        isNaN(totalFacturado - costoTotal)
+        ? "N/A"
+        : (totalFacturado - costoTotal)
+            .toFixed(2)
+            .replace(".", ",");
 
         return ({
 
@@ -493,11 +498,11 @@ function processXMLData(xml) {
 
             cuentas: getTagValue("infoFactura > cuentas"),
 
-            codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+            codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "N/A",
 
-            modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+            modelo: model.querySelector("descripcion")?.textContent.trim() || "N/A",
 
-            proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "No encontrado",
+            proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "N/A",
 
             cantidad: convertirNumero(
                 model.querySelector("cantidad")?.textContent.trim()
@@ -639,7 +644,7 @@ function exportToExcel() {
             let value =
             cell.textContent.trim();
 
-            if (/^\s*\d+[.,\d]*$/.test(value)) {
+            if (/^\d+[.,\d]*$/.test(value)) {
 
                 value =
                 value
