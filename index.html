@@ -330,24 +330,46 @@ localStorage.getItem("invoices")
 )
 || [];
 
+const moneyFields = [
+
+"costo_unitario",
+"costo_total",
+"iva_pagado",
+"precio_unitario",
+"precio_total",
+"iva_cobrado",
+"total_facturado",
+"utilidad"
+
+];
+
 function convertirNumero(valor){
 
-  if(valor === "N/A"){
+  if(!valor){
     return 0;
   }
 
-  let numero =
-  parseFloat(
-    String(valor)
+  let limpio = String(valor)
     .replace(",", ".")
-    .replace(/[^0-9.-]/g, "")
+    .replace(/[^0-9.-]/g, "");
+
+  let numero = parseFloat(limpio);
+
+  return isNaN(numero)
+    ? 0
+    : Number(numero.toFixed(2));
+}
+
+function formatoVisual(numero){
+
+  return Number(numero).toLocaleString(
+    "es-EC",
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }
   );
 
-  if(isNaN(numero)){
-    return 0;
-  }
-
-  return Number(numero.toFixed(2));
 }
 
 function processXMLData(xml){
@@ -356,7 +378,7 @@ const get = (sel)=>
 
 xml.querySelector(sel)
 ?.textContent
-.trim() || "N/A";
+.trim() || "";
 
 const models =
 
@@ -406,32 +428,32 @@ get("infoFactura > cuentas"),
 
 codigo:
 m.querySelector("codigoPrincipal")
-?.textContent.trim() || "N/A",
+?.textContent.trim() || "",
 
 modelo:
 m.querySelector("descripcion")
-?.textContent.trim() || "N/A",
+?.textContent.trim() || "",
 
 proveedor:
 m.querySelector("nombreProveedor")
-?.textContent.trim() || "N/A",
+?.textContent.trim() || "",
 
 cantidad:
 convertirNumero(
 m.querySelector("cantidad")
-?.textContent.trim() || "0"
+?.textContent.trim()
 ),
 
 costo_unitario:
 convertirNumero(
 m.querySelector("precioUnitario")
-?.textContent.trim() || "0"
+?.textContent.trim()
 ),
 
 costo_total:
 convertirNumero(
 m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "0"
+?.textContent.trim()
 ),
 
 iva_pagado:
@@ -444,13 +466,13 @@ get(
 precio_unitario:
 convertirNumero(
 m.querySelector("precioUnitario")
-?.textContent.trim() || "0"
+?.textContent.trim()
 ),
 
 precio_total:
 convertirNumero(
 m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "0"
+?.textContent.trim()
 ),
 
 iva_cobrado:
@@ -580,17 +602,6 @@ reader.readAsText(file);
 
 });
 
-function formatMoney(valor){
-
-if(typeof valor === "number"){
-
-return "$ " + valor.toFixed(2);
-
-}
-
-return valor;
-}
-
 function saveAndRender(){
 
 localStorage.setItem(
@@ -610,19 +621,6 @@ document.getElementById("invoice-table");
 
 tbody.innerHTML = "";
 
-const moneyFields = [
-
-"costo_unitario",
-"costo_total",
-"iva_pagado",
-"precio_unitario",
-"precio_total",
-"iva_cobrado",
-"total_facturado",
-"utilidad"
-
-];
-
 data.forEach((inv,index)=>{
 
 const row =
@@ -636,7 +634,7 @@ document.createElement("td");
 if(moneyFields.includes(key)){
 
 td.textContent =
-formatMoney(value);
+"$ " + formatoVisual(value);
 
 }else{
 
@@ -688,43 +686,12 @@ function exportToExcel(){
 
 const excelData = invoices.map(inv=>({
 
-...inv,
-
-costo_unitario: inv.costo_unitario,
-costo_total: inv.costo_total,
-iva_pagado: inv.iva_pagado,
-precio_unitario: inv.precio_unitario,
-precio_total: inv.precio_total,
-iva_cobrado: inv.iva_cobrado,
-total_facturado: inv.total_facturado,
-utilidad: inv.utilidad
+...inv
 
 }));
 
 const ws =
 XLSX.utils.json_to_sheet(excelData);
-
-const moneyColumns = [
-
-"G","H","I","J","K","L","M","N"
-
-];
-
-moneyColumns.forEach(col=>{
-
-for(let i = 2; i <= invoices.length + 1; i++){
-
-const cell = ws[col + i];
-
-if(cell){
-
-cell.z = '$ #,##0.00';
-
-}
-
-}
-
-});
 
 const wb =
 XLSX.utils.book_new();
@@ -734,6 +701,37 @@ wb,
 ws,
 "Facturas"
 );
+
+const columnasDinero = [
+
+"Q",
+"R",
+"S",
+"T",
+"U",
+"V",
+"W",
+"X"
+
+];
+
+columnasDinero.forEach(col=>{
+
+for(let i=2;i<=invoices.length+1;i++){
+
+const cell = ws[col + i];
+
+if(cell){
+
+cell.t = "n";
+
+cell.z = '$ #,##0.00';
+
+}
+
+}
+
+});
 
 XLSX.writeFile(
 wb,
@@ -760,21 +758,16 @@ headers.join("\t") + "\n";
 invoices.forEach(inv=>{
 
 text +=
-Object.values(inv)
-.map(value => {
+headers.map(key=>{
+
+const value = inv[key];
 
 if(typeof value === "number"){
 
-return value.toFixed(2);
+return value
+.toFixed(2)
+.replace(".", ",");
 
-}
-
-if(
-typeof value === "string" &&
-/^0+\d+$/.test(value)
-){
-
-return `="${value}"`;
 }
 
 return value;
