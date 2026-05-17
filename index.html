@@ -332,12 +332,22 @@ localStorage.getItem("invoices")
 
 function convertirNumero(valor){
 
-  if(typeof valor !== "string"){
-    return valor;
+  if(valor === "N/A"){
+    return 0;
   }
 
-  return valor.replace(/\./g, ",");
+  let numero =
+  parseFloat(
+    String(valor)
+    .replace(",", ".")
+    .replace(/[^0-9.-]/g, "")
+  );
 
+  if(isNaN(numero)){
+    return 0;
+  }
+
+  return Number(numero.toFixed(2));
 }
 
 function processXMLData(xml){
@@ -409,19 +419,19 @@ m.querySelector("nombreProveedor")
 cantidad:
 convertirNumero(
 m.querySelector("cantidad")
-?.textContent.trim() || "N/A"
+?.textContent.trim() || "0"
 ),
 
 costo_unitario:
 convertirNumero(
 m.querySelector("precioUnitario")
-?.textContent.trim() || "N/A"
+?.textContent.trim() || "0"
 ),
 
 costo_total:
 convertirNumero(
 m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "N/A"
+?.textContent.trim() || "0"
 ),
 
 iva_pagado:
@@ -434,13 +444,13 @@ get(
 precio_unitario:
 convertirNumero(
 m.querySelector("precioUnitario")
-?.textContent.trim() || "N/A"
+?.textContent.trim() || "0"
 ),
 
 precio_total:
 convertirNumero(
 m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "N/A"
+?.textContent.trim() || "0"
 ),
 
 iva_cobrado:
@@ -456,7 +466,9 @@ get("infoFactura > importeTotal")
 ),
 
 utilidad:
-get("infoFactura > utilidad"),
+convertirNumero(
+get("infoFactura > utilidad")
+),
 
 credito:
 get("infoFactura > credito"),
@@ -568,6 +580,17 @@ reader.readAsText(file);
 
 });
 
+function formatMoney(valor){
+
+if(typeof valor === "number"){
+
+return "$ " + valor.toFixed(2);
+
+}
+
+return valor;
+}
+
 function saveAndRender(){
 
 localStorage.setItem(
@@ -587,6 +610,19 @@ document.getElementById("invoice-table");
 
 tbody.innerHTML = "";
 
+const moneyFields = [
+
+"costo_unitario",
+"costo_total",
+"iva_pagado",
+"precio_unitario",
+"precio_total",
+"iva_cobrado",
+"total_facturado",
+"utilidad"
+
+];
+
 data.forEach((inv,index)=>{
 
 const row =
@@ -597,7 +633,16 @@ Object.entries(inv).forEach(([key,value])=>{
 const td =
 document.createElement("td");
 
+if(moneyFields.includes(key)){
+
+td.textContent =
+formatMoney(value);
+
+}else{
+
 td.textContent = value;
+
+}
 
 row.appendChild(td);
 
@@ -641,8 +686,45 @@ document.getElementById(
 
 function exportToExcel(){
 
+const excelData = invoices.map(inv=>({
+
+...inv,
+
+costo_unitario: inv.costo_unitario,
+costo_total: inv.costo_total,
+iva_pagado: inv.iva_pagado,
+precio_unitario: inv.precio_unitario,
+precio_total: inv.precio_total,
+iva_cobrado: inv.iva_cobrado,
+total_facturado: inv.total_facturado,
+utilidad: inv.utilidad
+
+}));
+
 const ws =
-XLSX.utils.json_to_sheet(invoices);
+XLSX.utils.json_to_sheet(excelData);
+
+const moneyColumns = [
+
+"G","H","I","J","K","L","M","N"
+
+];
+
+moneyColumns.forEach(col=>{
+
+for(let i = 2; i <= invoices.length + 1; i++){
+
+const cell = ws[col + i];
+
+if(cell){
+
+cell.z = '$ #,##0.00';
+
+}
+
+}
+
+});
 
 const wb =
 XLSX.utils.book_new();
@@ -681,20 +763,18 @@ text +=
 Object.values(inv)
 .map(value => {
 
+if(typeof value === "number"){
+
+return value.toFixed(2);
+
+}
+
 if(
 typeof value === "string" &&
 /^0+\d+$/.test(value)
 ){
 
 return `="${value}"`;
-}
-
-if(
-typeof value === "string"
-){
-
-return value.replace(/\./g, ",");
-
 }
 
 return value;
