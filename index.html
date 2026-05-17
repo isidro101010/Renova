@@ -419,7 +419,6 @@ document.getElementById("upload-form").addEventListener("submit", (e) => {
 
                 updateFacturaCount();
 
-                // LIMPIAR INPUT
                 fileInput.value = "";
 
             } else {
@@ -444,87 +443,107 @@ function processXMLData(xml) {
 
     const getTagValue = (path) =>
 
-        xml.querySelector(path)?.textContent.trim() || "No encontrado";
+        xml.querySelector(path)?.textContent.trim() || "0,00";
 
     const models = Array.from(xml.querySelectorAll("detalles > detalle"));
 
-    return models.map(model => ({
+    return models.map(model => {
 
-        factura: getTagValue("infoTributaria > secuencial"),
+        const costoTotal =
+        parseFloat(
+            (model.querySelector("precioTotalSinImpuesto")
+            ?.textContent.trim() || "0")
+            .replace(",", ".")
+        );
 
-        fecha: getTagValue("infoFactura > fechaEmision"),
+        const totalFacturado =
+        parseFloat(
+            (getTagValue("infoFactura > importeTotal"))
+            .replace(",", ".")
+        );
 
-        fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
+        const utilidadCalculada =
+        (totalFacturado - costoTotal)
+        .toFixed(2)
+        .replace(".", ",");
 
-        cliente: getTagValue("infoFactura > razonSocialComprador"),
+        return ({
 
-        ruc: getTagValue("infoFactura > identificacionComprador"),
+            factura: getTagValue("infoTributaria > secuencial"),
 
-        provincia: getTagValue("infoFactura > direccionComprador"),
+            fecha: getTagValue("infoFactura > fechaEmision"),
 
-        ciudad: getTagValue("infoFactura > direccionComprador"),
+            fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
 
-        lista_precio: getTagValue("infoFactura > listaPrecio"),
+            cliente: getTagValue("infoFactura > razonSocialComprador"),
 
-        canal: getTagValue("infoFactura > canal"),
+            ruc: getTagValue("infoFactura > identificacionComprador"),
 
-        sub_canal: getTagValue("infoFactura > subCanal"),
+            provincia: getTagValue("infoFactura > direccionComprador"),
 
-        vendedor: getTagValue("infoFactura > vendedor"),
+            ciudad: getTagValue("infoFactura > direccionComprador"),
 
-        cuentas: getTagValue("infoFactura > cuentas"),
+            lista_precio: getTagValue("infoFactura > listaPrecio"),
 
-        codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+            canal: getTagValue("infoFactura > canal"),
 
-        modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+            sub_canal: getTagValue("infoFactura > subCanal"),
 
-        proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "No encontrado",
+            vendedor: getTagValue("infoFactura > vendedor"),
 
-        cantidad: convertirNumero(
-            model.querySelector("cantidad")?.textContent.trim()
-        ),
+            cuentas: getTagValue("infoFactura > cuentas"),
 
-        costo_unitario: convertirNumero(
-            model.querySelector("precioUnitario")?.textContent.trim()
-        ),
+            codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
 
-        costo_total: convertirNumero(
-            model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
-        ),
+            modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
 
-        iva_pagado: convertirNumero(
-            getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
-        ),
+            proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "No encontrado",
 
-        precio_unitario: convertirNumero(
-            model.querySelector("precioUnitario")?.textContent.trim()
-        ),
+            cantidad: convertirNumero(
+                model.querySelector("cantidad")?.textContent.trim()
+            ),
 
-        precio_total: convertirNumero(
-            model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
-        ),
+            costo_unitario: convertirNumero(
+                model.querySelector("precioUnitario")?.textContent.trim()
+            ),
 
-        iva_cobrado: convertirNumero(
-            getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
-        ),
+            costo_total: convertirNumero(
+                model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
+            ),
 
-        total_facturado: convertirNumero(
-            getTagValue("infoFactura > importeTotal")
-        ),
+            iva_pagado: convertirNumero(
+                getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
+            ),
 
-        utilidad: convertirNumero(
-            getTagValue("infoFactura > utilidad")
-        ),
+            precio_unitario: convertirNumero(
+                model.querySelector("precioUnitario")?.textContent.trim()
+            ),
 
-        credito: getTagValue("infoFactura > credito"),
+            precio_total: convertirNumero(
+                model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
+            ),
 
-        condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+            iva_cobrado: convertirNumero(
+                getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
+            ),
 
-        pendientes: getTagValue("infoFactura > pendientes"),
+            total_facturado: convertirNumero(
+                getTagValue("infoFactura > importeTotal")
+            ),
 
-        perdido: getTagValue("infoFactura > perdido")
+            utilidad: utilidadCalculada,
 
-    }));
+            credito: getTagValue("infoFactura > credito"),
+
+            condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+
+            pendientes: getTagValue("infoFactura > pendientes"),
+
+            perdido: getTagValue("infoFactura > perdido")
+
+        });
+
+    });
 
 }
 
