@@ -45,24 +45,15 @@ header{
 }
 
 .header-container{
-
   max-width:1700px;
   margin:auto;
-
   background:#111827;
-
   border:1px solid var(--border);
-
   border-radius:24px;
-
   padding:25px;
-
   display:flex;
-
   justify-content:space-between;
-
   align-items:center;
-
   gap:20px;
 }
 
@@ -81,19 +72,12 @@ header{
 }
 
 .excel-btn{
-
   background:var(--success);
-
   color:white;
-
   border:none;
-
   padding:14px 22px;
-
   border-radius:14px;
-
   font-weight:700;
-
   cursor:pointer;
 }
 
@@ -102,103 +86,66 @@ header{
 }
 
 main{
-
   max-width:1700px;
-
   margin:auto;
-
   padding:0 30px 40px;
 }
 
 .card{
-
   background:#111827;
-
   border:1px solid var(--border);
-
   border-radius:24px;
-
   padding:25px;
 }
 
 .top-section{
-
   display:flex;
-
   justify-content:space-between;
-
   align-items:center;
-
   margin-bottom:25px;
 }
 
 .factura-count{
-
   background:#1f2937;
-
   padding:12px 18px;
-
   border-radius:12px;
 }
 
 form{
-
   display:flex;
-
   gap:15px;
-
   margin-bottom:25px;
-
   flex-wrap:wrap;
 }
 
 input{
-
   flex:1;
-
   background:#0f172a;
-
   border:1px solid var(--border);
-
   color:white;
-
   padding:14px;
-
   border-radius:14px;
 }
 
 .upload-btn{
-
   background:var(--primary);
-
   color:white;
-
   border:none;
-
   padding:14px 22px;
-
   border-radius:14px;
-
   font-weight:700;
-
   cursor:pointer;
 }
 
 .table-container{
-
   overflow:auto;
-
   border-radius:16px;
-
   border:1px solid var(--border);
 }
 
 table{
-
   width:100%;
-
   min-width:2400px;
-
   border-collapse:collapse;
 }
 
@@ -207,20 +154,14 @@ thead{
 }
 
 th{
-
   padding:14px 12px;
-
   font-size:.8rem;
-
   text-transform:uppercase;
 }
 
 td{
-
   padding:12px;
-
   text-align:center;
-
   border-bottom:1px solid rgba(255,255,255,.05);
 }
 
@@ -229,26 +170,17 @@ tbody tr:nth-child(even){
 }
 
 .delete-btn{
-
   background:rgba(220,38,38,.15);
-
   color:#fecaca;
-
   border:none;
-
   padding:8px 12px;
-
   border-radius:10px;
-
   cursor:pointer;
 }
 
 footer{
-
   text-align:center;
-
   color:var(--muted);
-
   padding:30px;
 }
 
@@ -400,11 +332,13 @@ localStorage.getItem("invoices")
 
 function convertirNumero(valor){
 
-  if(typeof valor !== "string")
-  return valor;
+  if(typeof valor !== "string"){
+    return valor;
+  }
 
-  return valor.replace(/\./g, ",");
-
+  return valor
+    .replace(/\./g, "")
+    .replace(/,/g, ".");
 }
 
 function processXMLData(xml){
@@ -708,32 +642,8 @@ document.getElementById(
 
 function exportToExcel(){
 
-const excelData = invoices.map(inv => {
-
-const nuevo = {};
-
-Object.entries(inv).forEach(([key,value])=>{
-
-if(
-typeof value === "string"
-){
-
-nuevo[key] =
-value.replace(/\./g, ",");
-
-}else{
-
-nuevo[key] = value;
-}
-
-});
-
-return nuevo;
-
-});
-
 const ws =
-XLSX.utils.json_to_sheet(excelData);
+XLSX.utils.json_to_sheet(invoices);
 
 const wb =
 XLSX.utils.book_new();
@@ -784,7 +694,9 @@ if(
 typeof value === "string"
 ){
 
-return value.replace(/\./g, ",");
+return value
+.replace(/\./g, "")
+.replace(/,/g, ".");
 
 }
 
