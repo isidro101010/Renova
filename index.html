@@ -163,6 +163,7 @@ td{
   padding:12px;
   text-align:center;
   border-bottom:1px solid rgba(255,255,255,.05);
+  white-space:nowrap;
 }
 
 tbody tr:nth-child(even){
@@ -198,7 +199,7 @@ footer{
 
 <h1>Sistema Profesional de Facturación</h1>
 
-<p>Gestión avanzada XML</p>
+<p>Gestión avanzada XML y Excel</p>
 
 </div>
 
@@ -332,500 +333,415 @@ localStorage.getItem("invoices")
 
 function convertirNumero(valor){
 
-  if(valor === "N/A"){
-    return 0;
-  }
+    if(!valor){
 
-  let numero =
-  parseFloat(
-    String(valor)
-    .replace(",", ".")
-    .replace(/[^0-9.-]/g, "")
-  );
+        return "0,00";
 
-  if(isNaN(numero)){
-    return 0;
-  }
+    }
 
-  return Number(numero.toFixed(2));
-}
-
-function processXMLData(xml){
-
-const get = (sel)=>
-
-xml.querySelector(sel)
-?.textContent
-.trim() || "N/A";
-
-const models =
-
-Array.from(
-xml.querySelectorAll(
-"detalles > detalle"
-)
-);
-
-return models.map(m=>({
-
-factura:
-get("infoTributaria > secuencial"),
-
-fecha:
-get("infoFactura > fechaEmision"),
-
-fecha_entrega:
-get("infoFactura > fechaEntrega"),
-
-cliente:
-get("infoFactura > razonSocialComprador"),
-
-ruc:
-get("infoFactura > identificacionComprador"),
-
-provincia:
-get("infoFactura > direccionComprador"),
-
-ciudad:
-get("infoFactura > direccionComprador"),
-
-lista_precio:
-get("infoFactura > listaPrecio"),
-
-canal:
-get("infoFactura > canal"),
-
-sub_canal:
-get("infoFactura > subCanal"),
-
-vendedor:
-get("infoFactura > vendedor"),
-
-cuentas:
-get("infoFactura > cuentas"),
-
-codigo:
-m.querySelector("codigoPrincipal")
-?.textContent.trim() || "N/A",
-
-modelo:
-m.querySelector("descripcion")
-?.textContent.trim() || "N/A",
-
-proveedor:
-m.querySelector("nombreProveedor")
-?.textContent.trim() || "N/A",
-
-cantidad:
-convertirNumero(
-m.querySelector("cantidad")
-?.textContent.trim() || "0"
-),
-
-costo_unitario:
-convertirNumero(
-m.querySelector("precioUnitario")
-?.textContent.trim() || "0"
-),
-
-costo_total:
-convertirNumero(
-m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "0"
-),
-
-iva_pagado:
-convertirNumero(
-get(
-"infoFactura > totalConImpuestos > totalImpuesto > valor"
-)
-),
-
-precio_unitario:
-convertirNumero(
-m.querySelector("precioUnitario")
-?.textContent.trim() || "0"
-),
-
-precio_total:
-convertirNumero(
-m.querySelector("precioTotalSinImpuesto")
-?.textContent.trim() || "0"
-),
-
-iva_cobrado:
-convertirNumero(
-get(
-"infoFactura > totalConImpuestos > totalImpuesto > valor"
-)
-),
-
-total_facturado:
-convertirNumero(
-get("infoFactura > importeTotal")
-),
-
-utilidad:
-convertirNumero(
-get("infoFactura > utilidad")
-),
-
-credito:
-get("infoFactura > credito"),
-
-condiciones_credito:
-get("infoFactura > condicionesCredito"),
-
-pendientes:
-get("infoFactura > pendientes"),
-
-perdido:
-get("infoFactura > perdido")
-
-}));
+    return valor
+        .replace(/[^\d.,-]/g, '')
+        .replace(/\./g, ',');
 
 }
 
-document
-.getElementById("upload-form")
-.addEventListener("submit",(e)=>{
+document.getElementById("upload-form").addEventListener("submit", (e) => {
 
-e.preventDefault();
+    e.preventDefault();
 
-const fileInput =
-document.getElementById("file-upload");
+    const file = document.getElementById("file-upload").files[0];
 
-const file =
-fileInput.files[0];
+    if (file) {
 
-if(!file){
+        const reader = new FileReader();
 
-return alert(
-"Selecciona un XML."
-);
-}
+        reader.onload = function () {
 
-const reader =
-new FileReader();
+            const parser = new DOMParser();
 
-reader.onload = function(){
+            const xml = parser.parseFromString(this.result, "application/xml");
 
-try{
+            const cdata = xml.querySelector("comprobante")?.textContent.trim();
 
-const parser =
-new DOMParser();
+            if (cdata) {
 
-const xml =
-parser.parseFromString(
-this.result,
-"application/xml"
-);
+                const cdataXML = new DOMParser().parseFromString(cdata, "application/xml");
 
-const cdata =
-xml.querySelector("comprobante")
-?.textContent
-.trim();
+                const invoice = processXMLData(cdataXML);
 
-if(cdata){
+                const facturaNueva = invoice[0]?.factura;
 
-const inner =
-new DOMParser()
-.parseFromString(
-cdata,
-"application/xml"
-);
+                const yaExiste = invoices.some(inv => inv.factura === facturaNueva);
 
-const invoice =
-processXMLData(inner);
+                if (yaExiste) {
 
-const facturaNueva =
-invoice[0]?.factura;
+                    alert("Esta factura ya fue subida.");
 
-const yaExiste =
-invoices.some(
-inv => inv.factura === facturaNueva
-);
+                    return;
 
-if(yaExiste){
+                }
 
-alert(
-"Esta factura ya fue subida."
-);
+                invoices.push(...invoice);
 
-fileInput.value = "";
+                localStorage.setItem("invoices", JSON.stringify(invoices));
 
-return;
-}
+                populateTable();
 
-invoices.push(...invoice);
+                updateFacturaCount();
 
-saveAndRender();
+            } else {
 
-fileInput.value = "";
+                alert("No se encontró información válida en el archivo XML.");
 
-}
+            }
 
-}catch(err){
+        };
 
-console.error(err);
+        reader.readAsText(file);
 
-alert(
-"Error leyendo XML."
-);
-}
-
-};
-
-reader.readAsText(file);
+    }
 
 });
 
-function formatMoney(valor){
+function processXMLData(xml) {
 
-if(typeof valor === "number"){
+    const getTagValue = (path) =>
 
-return "$ " + valor.toFixed(2);
+        xml.querySelector(path)?.textContent.trim() || "No encontrado";
 
-}
+    const models = Array.from(xml.querySelectorAll("detalles > detalle"));
 
-return valor;
-}
+    return models.map(model => ({
 
-function saveAndRender(){
+        factura: getTagValue("infoTributaria > secuencial"),
 
-localStorage.setItem(
-"invoices",
-JSON.stringify(invoices)
-);
+        fecha: getTagValue("infoFactura > fechaEmision"),
 
-populateTable();
+        fecha_entrega: getTagValue("infoFactura > fechaEntrega"),
 
-updateFacturaCount();
+        cliente: getTagValue("infoFactura > razonSocialComprador"),
+
+        ruc: getTagValue("infoFactura > identificacionComprador"),
+
+        provincia: getTagValue("infoFactura > direccionComprador"),
+
+        ciudad: getTagValue("infoFactura > direccionComprador"),
+
+        lista_precio: getTagValue("infoFactura > listaPrecio"),
+
+        canal: getTagValue("infoFactura > canal"),
+
+        sub_canal: getTagValue("infoFactura > subCanal"),
+
+        vendedor: getTagValue("infoFactura > vendedor"),
+
+        cuentas: getTagValue("infoFactura > cuentas"),
+
+        codigo: model.querySelector("codigoPrincipal")?.textContent.trim() || "No encontrado",
+
+        modelo: model.querySelector("descripcion")?.textContent.trim() || "No encontrado",
+
+        proveedor: model.querySelector("nombreProveedor")?.textContent.trim() || "No encontrado",
+
+        cantidad: convertirNumero(
+            model.querySelector("cantidad")?.textContent.trim()
+        ),
+
+        costo_unitario: convertirNumero(
+            model.querySelector("precioUnitario")?.textContent.trim()
+        ),
+
+        costo_total: convertirNumero(
+            model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
+        ),
+
+        iva_pagado: convertirNumero(
+            getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
+        ),
+
+        precio_unitario: convertirNumero(
+            model.querySelector("precioUnitario")?.textContent.trim()
+        ),
+
+        precio_total: convertirNumero(
+            model.querySelector("precioTotalSinImpuesto")?.textContent.trim()
+        ),
+
+        iva_cobrado: convertirNumero(
+            getTagValue("infoFactura > totalConImpuestos > totalImpuesto > valor")
+        ),
+
+        total_facturado: convertirNumero(
+            getTagValue("infoFactura > importeTotal")
+        ),
+
+        utilidad: convertirNumero(
+            getTagValue("infoFactura > utilidad")
+        ),
+
+        credito: getTagValue("infoFactura > credito"),
+
+        condiciones_credito: getTagValue("infoFactura > condicionesCredito"),
+
+        pendientes: getTagValue("infoFactura > pendientes"),
+
+        perdido: getTagValue("infoFactura > perdido")
+
+    }));
+
 }
 
 function populateTable(data = invoices){
 
-const tbody =
-document.getElementById("invoice-table");
+    const tbody =
+    document.getElementById("invoice-table");
 
-tbody.innerHTML = "";
+    tbody.innerHTML = "";
 
-const moneyFields = [
+    invoices.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-"costo_unitario",
-"costo_total",
-"iva_pagado",
-"precio_unitario",
-"precio_total",
-"iva_cobrado",
-"total_facturado",
-"utilidad"
+    data.forEach((invoice, index) => {
 
-];
+        const row = document.createElement("tr");
 
-data.forEach((inv,index)=>{
+        row.innerHTML = Object.values(invoice).map(value => {
 
-const row =
-document.createElement("tr");
+            return `<td>${value}</td>`;
 
-Object.entries(inv).forEach(([key,value])=>{
+        }).join("");
 
-const td =
-document.createElement("td");
+        const deleteBtn = document.createElement("button");
 
-if(moneyFields.includes(key)){
+        deleteBtn.textContent = "Eliminar";
 
-td.textContent =
-formatMoney(value);
+        deleteBtn.classList.add("delete-btn");
 
-}else{
+        deleteBtn.addEventListener("click", () => {
 
-td.textContent = value;
+            invoices.splice(index, 1);
 
-}
+            localStorage.setItem("invoices", JSON.stringify(invoices));
 
-row.appendChild(td);
+            populateTable();
 
-});
+            updateFacturaCount();
 
-const del =
-document.createElement("button");
+        });
 
-del.textContent = "Eliminar";
+        const deleteCell = document.createElement("td");
 
-del.className = "delete-btn";
+        deleteCell.appendChild(deleteBtn);
 
-del.onclick = ()=>{
+        row.appendChild(deleteCell);
 
-invoices.splice(index,1);
+        tbody.appendChild(row);
 
-saveAndRender();
-};
-
-const td =
-document.createElement("td");
-
-td.appendChild(del);
-
-row.appendChild(td);
-
-tbody.appendChild(row);
-
-});
+    });
 
 }
 
 function updateFacturaCount(){
 
-document.getElementById(
-"factura-count"
-).textContent =
+    document.getElementById(
+    "factura-count"
+    ).textContent =
 
-`Facturas leídas: ${invoices.length}`;
-}
-
-function exportToExcel(){
-
-const excelData = invoices.map(inv=>({
-
-...inv,
-
-costo_unitario: inv.costo_unitario,
-costo_total: inv.costo_total,
-iva_pagado: inv.iva_pagado,
-precio_unitario: inv.precio_unitario,
-precio_total: inv.precio_total,
-iva_cobrado: inv.iva_cobrado,
-total_facturado: inv.total_facturado,
-utilidad: inv.utilidad
-
-}));
-
-const ws =
-XLSX.utils.json_to_sheet(excelData);
-
-const moneyColumns = [
-
-"G","H","I","J","K","L","M","N"
-
-];
-
-moneyColumns.forEach(col=>{
-
-for(let i = 2; i <= invoices.length + 1; i++){
-
-const cell = ws[col + i];
-
-if(cell){
-
-cell.z = '$ #,##0.00';
+    `Facturas leídas: ${invoices.length}`;
 
 }
 
-}
+document.addEventListener("DOMContentLoaded", () => {
+
+    populateTable();
+
+    updateFacturaCount();
 
 });
 
-const wb =
-XLSX.utils.book_new();
+function exportToExcel() {
 
-XLSX.utils.book_append_sheet(
-wb,
-ws,
-"Facturas"
-);
+    const headers = [
 
-XLSX.writeFile(
-wb,
-"facturas.xlsx"
-);
+        "Factura",
+        "Fecha",
+        "Fecha Entrega",
+        "Cliente",
+        "RUC",
+        "Provincia",
+        "Ciudad",
+        "Lista Precio",
+        "Canal",
+        "Sub Canal",
+        "Vendedor",
+        "Cuentas",
+        "Código",
+        "Modelo",
+        "Proveedor",
+        "Cantidad",
+        "Costo Unitario",
+        "Costo Total",
+        "IVA Pagado",
+        "Precio Unitario",
+        "Precio Total",
+        "IVA Cobrado",
+        "Total Facturado",
+        "Utilidad",
+        "Crédito",
+        "Condiciones Crédito",
+        "Pendientes",
+        "Perdido"
+
+    ];
+
+    const data = [headers];
+
+    invoices.forEach(inv => {
+
+        data.push([
+
+            inv.factura,
+            inv.fecha,
+            inv.fecha_entrega,
+            inv.cliente,
+            inv.ruc,
+            inv.provincia,
+            inv.ciudad,
+            inv.lista_precio,
+            inv.canal,
+            inv.sub_canal,
+            inv.vendedor,
+            inv.cuentas,
+            inv.codigo,
+            inv.modelo,
+            inv.proveedor,
+
+            parseFloat(String(inv.cantidad).replace(",", ".")) || 0,
+            parseFloat(String(inv.costo_unitario).replace(",", ".")) || 0,
+            parseFloat(String(inv.costo_total).replace(",", ".")) || 0,
+            parseFloat(String(inv.iva_pagado).replace(",", ".")) || 0,
+            parseFloat(String(inv.precio_unitario).replace(",", ".")) || 0,
+            parseFloat(String(inv.precio_total).replace(",", ".")) || 0,
+            parseFloat(String(inv.iva_cobrado).replace(",", ".")) || 0,
+            parseFloat(String(inv.total_facturado).replace(",", ".")) || 0,
+            parseFloat(String(inv.utilidad).replace(",", ".")) || 0,
+
+            inv.credito,
+            inv.condiciones_credito,
+            inv.pendientes,
+            inv.perdido
+
+        ]);
+
+    });
+
+    const ws =
+    XLSX.utils.aoa_to_sheet(data);
+
+    const columnasNumericas = [
+
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X"
+
+    ];
+
+    columnasNumericas.forEach(col => {
+
+        for(let i = 2; i <= invoices.length + 1; i++){
+
+            const cell = ws[col + i];
+
+            if(cell){
+
+                cell.t = "n";
+
+                cell.z = '#,##0.00';
+
+            }
+
+        }
+
+    });
+
+    const wb =
+    XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+    wb,
+    ws,
+    "Facturas"
+    );
+
+    XLSX.writeFile(
+    wb,
+    "facturas.xlsx"
+    );
 
 }
 
 async function copyAsExcel(){
 
-if(invoices.length === 0){
+    if(invoices.length === 0){
 
-return alert(
-"No hay datos para copiar."
-);
+        return alert(
+        "No hay datos para copiar."
+        );
+
+    }
+
+    const headers =
+    Object.keys(invoices[0]);
+
+    let text =
+    headers.join("\t") + "\n";
+
+    invoices.forEach(inv => {
+
+        text += headers.map(key => {
+
+            let value = inv[key];
+
+            return value;
+
+        }).join("\t") + "\n";
+
+    });
+
+    await navigator.clipboard.writeText(text);
+
+    alert(
+    "Copiado correctamente para Excel."
+    );
+
 }
 
-const headers =
-Object.keys(invoices[0]);
+document.getElementById("search-bar").addEventListener("input", (e) => {
 
-let text =
-headers.join("\t") + "\n";
+    const term =
+    e.target.value.toLowerCase();
 
-invoices.forEach(inv=>{
+    const filtered =
+    invoices.filter(inv =>
 
-text +=
-Object.values(inv)
-.map(value => {
+        Object.values(inv)
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
 
-if(typeof value === "number"){
+    );
 
-return value.toFixed(2);
-
-}
-
-if(
-typeof value === "string" &&
-/^0+\d+$/.test(value)
-){
-
-return `="${value}"`;
-}
-
-return value;
-
-})
-.join("\t") + "\n";
+    populateTable(filtered);
 
 });
-
-await navigator.clipboard.writeText(text);
-
-alert(
-"Copiado correctamente para Excel."
-);
-
-}
-
-document
-.getElementById("search-bar")
-.addEventListener("input",(e)=>{
-
-const term =
-e.target.value.toLowerCase();
-
-const filtered =
-
-invoices.filter(inv=>
-
-Object.values(inv)
-.join(" ")
-.toLowerCase()
-.includes(term)
-
-);
-
-populateTable(filtered);
-
-});
-
-document.addEventListener(
-"DOMContentLoaded",
-()=>{
-
-populateTable();
-
-updateFacturaCount();
-
-}
-);
 
 </script>
 
 </body>
+
 </html>
