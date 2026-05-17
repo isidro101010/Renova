@@ -24,8 +24,6 @@
   --card2:#1f2937;
 
   --primary:#2563eb;
-  --primary-hover:#1d4ed8;
-
   --success:#16a34a;
   --danger:#dc2626;
 
@@ -134,11 +132,6 @@ header{
   cursor:pointer;
 
   transition:.25s;
-}
-
-.excel-btn:hover{
-
-  transform:translateY(-2px);
 }
 
 .copy-btn{
@@ -322,57 +315,6 @@ tbody tr:hover{
   cursor:pointer;
 }
 
-.loading{
-
-  position:fixed;
-
-  inset:0;
-
-  background:rgba(0,0,0,.65);
-
-  display:none;
-
-  align-items:center;
-
-  justify-content:center;
-
-  z-index:999;
-}
-
-.loading-box{
-
-  background:var(--card);
-
-  padding:30px 40px;
-
-  border-radius:24px;
-
-  text-align:center;
-}
-
-.spinner{
-
-  width:55px;
-  height:55px;
-
-  border:5px solid rgba(255,255,255,.15);
-
-  border-top:5px solid var(--primary);
-
-  border-radius:50%;
-
-  margin:auto auto 15px;
-
-  animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-
-  to{
-    transform:rotate(360deg);
-  }
-}
-
 footer{
 
   text-align:center;
@@ -387,18 +329,6 @@ footer{
 </head>
 
 <body>
-
-<div class="loading" id="loading">
-
-  <div class="loading-box">
-
-    <div class="spinner"></div>
-
-    <p>Procesando XML...</p>
-
-  </div>
-
-</div>
 
 <header>
 
@@ -539,124 +469,6 @@ JSON.parse(
 )
 || [];
 
-const loading =
-document.getElementById("loading");
-
-function showLoading(){
-
-  loading.style.display = "flex";
-}
-
-function hideLoading(){
-
-  loading.style.display = "none";
-}
-
-document
-.getElementById("upload-form")
-.addEventListener("submit",(e)=>{
-
-  e.preventDefault();
-
-  const fileInput =
-  document.getElementById("file-upload");
-
-  const file =
-  fileInput.files[0];
-
-  if(!file){
-
-    return alert(
-      "Selecciona un XML."
-    );
-  }
-
-  showLoading();
-
-  const reader =
-  new FileReader();
-
-  reader.onload = function(){
-
-    try{
-
-      const parser =
-      new DOMParser();
-
-      const xml =
-      parser.parseFromString(
-        this.result,
-        "application/xml"
-      );
-
-      const cdata =
-      xml.querySelector("comprobante")
-      ?.textContent
-      .trim();
-
-      if(cdata){
-
-        const inner =
-        new DOMParser()
-        .parseFromString(
-          cdata,
-          "application/xml"
-        );
-
-        const invoice =
-        processXMLData(inner);
-
-        const facturaNueva =
-        invoice[0]?.factura;
-
-        const yaExiste =
-        invoices.some(
-          inv => inv.factura === facturaNueva
-        );
-
-        if(yaExiste){
-
-          alert(
-            "Esta factura ya fue subida."
-          );
-
-          hideLoading();
-
-          fileInput.value = "";
-
-          return;
-        }
-
-        invoices.push(...invoice);
-
-        saveAndRender();
-
-        fileInput.value = "";
-
-      }else{
-
-        alert(
-          "No se encontró información válida."
-        );
-      }
-
-    }catch(err){
-
-      console.error(err);
-
-      alert(
-        "Error leyendo XML."
-      );
-    }
-
-    hideLoading();
-
-  };
-
-  reader.readAsText(file);
-
-});
-
 function processXMLData(xml){
 
   const get = (sel)=>
@@ -775,6 +587,100 @@ function processXMLData(xml){
 
 }
 
+document
+.getElementById("upload-form")
+.addEventListener("submit",(e)=>{
+
+  e.preventDefault();
+
+  const fileInput =
+  document.getElementById("file-upload");
+
+  const file =
+  fileInput.files[0];
+
+  if(!file){
+
+    return alert(
+      "Selecciona un XML."
+    );
+  }
+
+  const reader =
+  new FileReader();
+
+  reader.onload = function(){
+
+    try{
+
+      const parser =
+      new DOMParser();
+
+      const xml =
+      parser.parseFromString(
+        this.result,
+        "application/xml"
+      );
+
+      const cdata =
+      xml.querySelector("comprobante")
+      ?.textContent
+      .trim();
+
+      if(cdata){
+
+        const inner =
+        new DOMParser()
+        .parseFromString(
+          cdata,
+          "application/xml"
+        );
+
+        const invoice =
+        processXMLData(inner);
+
+        const facturaNueva =
+        invoice[0]?.factura;
+
+        const yaExiste =
+        invoices.some(
+          inv => inv.factura === facturaNueva
+        );
+
+        if(yaExiste){
+
+          alert(
+            "Esta factura ya fue subida."
+          );
+
+          fileInput.value = "";
+
+          return;
+        }
+
+        invoices.push(...invoice);
+
+        saveAndRender();
+
+        fileInput.value = "";
+
+      }
+
+    }catch(err){
+
+      console.error(err);
+
+      alert(
+        "Error leyendo XML."
+      );
+    }
+
+  };
+
+  reader.readAsText(file);
+
+});
+
 function saveAndRender(){
 
   localStorage.setItem(
@@ -877,10 +783,10 @@ async function copyAsExcel(){
   }
 
   const headers =
-    Object.keys(invoices[0]);
+  Object.keys(invoices[0]);
 
   let text =
-    headers.join("\t") + "\n";
+  headers.join("\t") + "\n";
 
   invoices.forEach(inv=>{
 
@@ -896,6 +802,14 @@ async function copyAsExcel(){
         return `="${value}"`;
       }
 
+      if(
+        typeof value === "string"
+      ){
+
+        return value.replace(/\./g, ",");
+
+      }
+
       return value;
 
     })
@@ -903,22 +817,11 @@ async function copyAsExcel(){
 
   });
 
-  try{
+  await navigator.clipboard.writeText(text);
 
-    await navigator.clipboard.writeText(text);
-
-    alert(
-      "Copiado correctamente para Excel."
-    );
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      "No se pudo copiar."
-    );
-  }
+  alert(
+    "Copiado correctamente para Excel."
+  );
 
 }
 
