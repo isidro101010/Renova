@@ -69,6 +69,7 @@ header{
 .button-group{
   display:flex;
   gap:12px;
+  flex-wrap:wrap;
 }
 
 .excel-btn{
@@ -83,6 +84,10 @@ header{
 
 .copy-btn{
   background:var(--primary);
+}
+
+.delete-all-btn{
+  background:var(--danger);
 }
 
 main{
@@ -217,6 +222,13 @@ class="excel-btn copy-btn"
 onclick="copyAsExcel()"
 >
 Copiar
+</button>
+
+<button
+class="excel-btn delete-all-btn"
+onclick="deleteAllInvoices()"
+>
+Eliminar Todo
 </button>
 
 </div>
@@ -615,6 +627,26 @@ function updateFacturaCount(){
     ).textContent =
 
     `Facturas leídas: ${invoices.length}`;
+
+}
+
+function deleteAllInvoices(){
+
+    const confirmar = confirm(
+        "¿Seguro que quieres eliminar TODAS las facturas?"
+    );
+
+    if(!confirmar){
+        return;
+    }
+
+    invoices = [];
+
+    localStorage.removeItem("invoices");
+
+    populateTable();
+
+    updateFacturaCount();
 
 }
 
