@@ -644,7 +644,7 @@ function exportToExcel() {
             let value =
             cell.textContent.trim();
 
-            if (/^\d+[.,\d]*$/.test(value)) {
+            if (/^\s*\d+[.,\d]*$/.test(value)) {
 
                 value =
                 value
@@ -694,13 +694,27 @@ async function copyAsExcel(){
     let text =
     headers.join("\t") + "\n";
 
-    invoices.forEach(inv => {
+    invoices.forEach(inv=>{
 
-        text += headers.map(key => {
+        text +=
+        Object.values(inv)
+        .map(value => {
 
-            return inv[key];
+            if(
+                typeof value === "string"
+            ){
 
-        }).join("\t") + "\n";
+                return value
+                    .replace(/\./g, ",")
+                    .replace(/\$/g, "")
+                    .trim();
+
+            }
+
+            return value;
+
+        })
+        .join("\t") + "\n";
 
     });
 
