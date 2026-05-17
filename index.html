@@ -628,39 +628,83 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function exportToExcel() {
 
-    const table =
-    document.querySelector("table");
+    const numericFields = [
+        "cantidad",
+        "costo_unitario",
+        "costo_total",
+        "iva_pagado",
+        "precio_unitario",
+        "precio_total",
+        "iva_cobrado",
+        "total_facturado",
+        "utilidad"
+    ];
 
-    const rows =
-    Array.from(table.querySelectorAll("tr"));
+    const data = invoices.map(inv => {
 
-    const data =
-    rows.map(row => {
+        const row = {};
 
-        return Array.from(
-            row.querySelectorAll("th, td")
-        ).map(cell => {
+        Object.keys(inv).forEach(key => {
 
-            let value =
-            cell.textContent.trim();
+            let value = inv[key];
 
-            if (/^\s*\d+[.,\d]*$/.test(value)) {
+            if (
+                numericFields.includes(key) &&
+                value !== "N/A"
+            ) {
 
-                value =
-                value
-                .replace(/[^\d,.]/g, '')
-                .replace(/\./g, ',');
+                value = parseFloat(
+                    String(value)
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+                );
 
             }
 
-            return value;
+            row[key] = value;
 
         });
+
+        return row;
 
     });
 
     const worksheet =
-    XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.json_to_sheet(data);
+
+    const range =
+    XLSX.utils.decode_range(worksheet["!ref"]);
+
+    for(let R = 1; R <= range.e.r; R++){
+
+        numericFields.forEach(field => {
+
+            const headers =
+            Object.keys(data[0]);
+
+            const colIndex =
+            headers.indexOf(field);
+
+            if(colIndex === -1) return;
+
+            const cellAddress =
+            XLSX.utils.encode_cell({
+                r: R,
+                c: colIndex
+            });
+
+            const cell =
+            worksheet[cellAddress];
+
+            if(cell && typeof cell.v === "number"){
+
+                cell.z = '$ #,##0.00';
+
+            }
+
+        });
+
+    }
 
     const workbook =
     XLSX.utils.book_new();
@@ -694,27 +738,13 @@ async function copyAsExcel(){
     let text =
     headers.join("\t") + "\n";
 
-    invoices.forEach(inv=>{
+    invoices.forEach(inv => {
 
-        text +=
-        Object.values(inv)
-        .map(value => {
+        text += headers.map(key => {
 
-            if(
-                typeof value === "string"
-            ){
+            return inv[key];
 
-                return value
-                    .replace(/\./g, ",")
-                    .replace(/\$/g, "")
-                    .trim();
-
-            }
-
-            return value;
-
-        })
-        .join("\t") + "\n";
+        }).join("\t") + "\n";
 
     });
 
