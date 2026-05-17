@@ -336,9 +336,8 @@ function convertirNumero(valor){
     return valor;
   }
 
-  return valor
-    .replace(/\./g, "")
-    .replace(/,/g, ".");
+  return valor.replace(/\./g, ",");
+
 }
 
 function processXMLData(xml){
@@ -694,9 +693,7 @@ if(
 typeof value === "string"
 ){
 
-return value
-.replace(/\./g, "")
-.replace(/,/g, ".");
+return value.replace(/\./g, ",");
 
 }
 
